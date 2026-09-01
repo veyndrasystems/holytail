@@ -1,0 +1,20 @@
+version = 1
+agents = ["claude", "codex"]
+
+[[plugins]]
+name = "holytail"
+source = "path:./vendor/holytail"
+path = "plugins/holytail"
+targets = ["claude", "codex"]
+
+[[subagents]]
+name = "holytail"
+source = "path:./vendor/holytail"
+path = "agents/holytail.md"
+targets = ["claude", "codex"]
+
+[[subagents]]
+name = "semanticreviewer"
+source = "path:./vendor/holytail"
+path = "agents/semanticreviewer.toml"
+targets = ["claude", "codex"]

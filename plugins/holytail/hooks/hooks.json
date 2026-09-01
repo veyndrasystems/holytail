@@ -1,0 +1,19 @@
+{
+  "description": "Present Holytail routing when a Codex session starts.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/holytail-routing.cjs\"",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\hooks\\holytail-routing.cjs\"",
+            "timeout": 5,
+            "statusMessage": "Loading Holytail routing"
+          }
+        ]
+      }
+    ]
+  }
+}

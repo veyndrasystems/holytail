@@ -1,0 +1,20 @@
+{
+  "name": "holytail",
+  "version": "0.1.0",
+  "description": "Preserve accepted product meaning before minimizing implementation mechanism.",
+  "author": {
+    "name": "Veyndra Systems",
+    "email": "veyndra-operator@users.noreply.github.com",
+    "url": "https://github.com/veyndrasystems"
+  },
+  "homepage": "https://github.com/veyndrasystems/holytail",
+  "repository": "https://github.com/veyndrasystems/holytail",
+  "keywords": [
+    "semantic-preservation",
+    "implementation-gate",
+    "dotagents",
+    "soulmate"
+  ],
+  "skills": "./skills",
+  "hooks": "./hooks/hooks.json"
+}

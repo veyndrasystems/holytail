@@ -1,0 +1,10 @@
+# dotagents and host projections are generated, not authored package state.
+.agents/
+.claude/agents/
+.claude-plugin/marketplace.json
+.codex/agents/
+agents.lock
+
+# Local validation artifacts.
+__pycache__/
+*.pyc

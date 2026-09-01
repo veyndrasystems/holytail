@@ -1,0 +1,27 @@
+version = 1
+agents = ["claude", "codex"]
+
+# Consumer deployment declaration. Merge these entries into the target
+# project's existing agents.toml; installing the plugin does not import this
+# file transitively. All declarations use the same package revision.
+
+[[plugins]]
+name = "holytail"
+source = "git@github.com:veyndrasystems/holytail.git"
+ref = "main"
+path = "plugins/holytail"
+targets = ["claude", "codex"]
+
+[[subagents]]
+name = "holytail"
+source = "git@github.com:veyndrasystems/holytail.git"
+ref = "main"
+path = "agents/holytail.md"
+targets = ["claude", "codex"]
+
+[[subagents]]
+name = "semanticreviewer"
+source = "git@github.com:veyndrasystems/holytail.git"
+ref = "main"
+path = "agents/semanticreviewer.toml"
+targets = ["claude", "codex"]

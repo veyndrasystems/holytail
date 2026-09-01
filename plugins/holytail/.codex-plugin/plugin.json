@@ -1,0 +1,36 @@
+{
+  "name": "holytail",
+  "version": "0.1.0",
+  "description": "Preserve accepted product meaning before minimizing implementation mechanism.",
+  "author": {
+    "name": "Veyndra Systems",
+    "email": "veyndra-operator@users.noreply.github.com",
+    "url": "https://github.com/veyndrasystems"
+  },
+  "homepage": "https://github.com/veyndrasystems/holytail",
+  "repository": "https://github.com/veyndrasystems/holytail",
+  "keywords": [
+    "semantic-preservation",
+    "implementation-gate",
+    "dotagents",
+    "soulmate"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Holytail",
+    "shortDescription": "Preserve meaning before minimizing code",
+    "longDescription": "A meaning-preserving implementation gate with inline and formal routes, bounded execution, and optional independent semantic review.",
+    "developerName": "Veyndra Systems",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/veyndrasystems/holytail",
+    "defaultPrompt": [
+      "Use $holytail to implement this without losing accepted meaning.",
+      "Use $holytail to decide whether this change needs formal review."
+    ],
+    "brandColor": "#6D5EF6"
+  }
+}

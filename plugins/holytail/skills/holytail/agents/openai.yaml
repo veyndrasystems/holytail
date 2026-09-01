@@ -1,0 +1,7 @@
+interface:
+  display_name: "Holytail"
+  short_description: "Preserve meaning before minimizing implementation"
+  default_prompt: "Use $holytail to preserve accepted meaning while implementing the smallest faithful mechanism."
+
+policy:
+  allow_implicit_invocation: true
