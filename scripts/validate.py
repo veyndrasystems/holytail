@@ -284,28 +284,68 @@ def check_axis_collision(source: str, label: str = "status-bearing source") -> N
         r"`?(?:FULL|ECO|INLINE|FORMAL)`?\b"
     )
     mapping_verb = re.compile(
-        r"\b(?:assign\w*|map\w*|mean\w*|set\w*|select\w*|suppl\w*|"
-            r"trigger\w*|impl(?:y|ies)\w*|becom\w*|rout\w*|escalat\w*|"
-            r"choose\w*|determin\w*|designat\w*|force\w*|config\w*|"
-            r"enable\w*|activate\w*|pick\w*|is)\b",
+        r"\b(?:assign(?:s|ed|ing)?|map(?:s|ped|ping)?|mean(?:s|t)?|"
+        r"set(?:s|ting)?|select(?:s|ed|ing)?|suppl(?:y|ies|ied|ying)|"
+        r"trigger(?:s|ed|ing)?|impl(?:y|ies|ied|ying)|becom(?:e|es|ing)?|"
+        r"rout(?:e|es|ed|ing)?|escalat(?:e|es|ed|ing)?|"
+        r"choose(?:s|n|ing)?|determin(?:e|es|ed|ing)?|"
+        r"designat(?:e|es|ed|ing)?|force(?:s|d|ing)?|"
+        r"configur(?:e|es|ed|ing)?|enabl(?:e|es|ed|ing)?|"
+        r"activat(?:e|es|ed|ing)?|pick(?:s|ed|ing)?|is)\b",
         re.I,
     )
-    negative_relation = re.compile(
-        r"\b(?:is\s+not|never|does\s+not|cannot|can\s+not|can't|"
-        r"neither|unrelated)\b",
-        re.I,
-    )
+    def statement_context(start: int) -> str:
+        tail = normalized[start:]
+        end = re.search(r"[.!?;]", tail)
+        return tail[:end.end() if end else len(tail)]
+
+    def mapping_is_negated(relation: str) -> bool:
+        verbs = list(mapping_verb.finditer(relation))
+        if not verbs:
+            return False
+        nearest = verbs[-1]
+        prefix = relation[:nearest.start()]
+        suffix = relation[nearest.end():]
+        if nearest.group(0).lower() == "is" and re.match(
+            r"\s+(?:not|unrelated)\b", suffix, re.I
+        ):
+            return True
+        clause = re.split(r"\b(?:and|but|however|yet)\b", prefix, flags=re.I)[-1]
+        return bool(
+            re.search(
+                r"(?:does\s+not|do\s+not|did\s+not|cannot|can\s+not|can't|never)"
+                r"(?:[\s,]+\w+){0,12}\s*$",
+                clause.strip(),
+                re.I,
+            )
+        )
+
+    def positive_policy(statement: str) -> bool:
+        lower = statement.lower()
+        policy = "explicit authorized project policy"
+        if policy not in lower:
+            return False
+        if re.search(
+            r"\b(?:without|no|not|never|unless|absent|lack\w*)\b"
+            r"[^.!?;]{0,80}\bexplicit authorized project policy\b",
+            lower,
+        ):
+            return False
+        return bool(
+            re.search(
+                r"\b(?:only\s+(?:under|with|if)|provided\s+that|when|if)\b"
+                r"[^.!?;]{0,100}\bexplicit authorized project policy\b",
+                lower,
+            )
+        )
+
     for match in level_to_axis.finditer(normalized):
         relation = match.group("relation")
-        statement_end = re.search(r"[.!?;]", normalized[match.start():])
-        statement = normalized[
-            match.start(): match.start() + statement_end.end()
-            if statement_end else len(normalized)
-        ]
+        statement = statement_context(match.start())
         if (
             mapping_verb.search(relation)
-            and not negative_relation.search(relation)
-            and "explicit authorized project policy" not in statement.lower()
+            and not mapping_is_negated(relation)
+            and not positive_policy(statement)
         ):
             fail(f"{label} contains a direct Ponytail-to-Holytail axis mapping")
 
@@ -320,13 +360,12 @@ def check_axis_collision(source: str, label: str = "status-bearing source") -> N
         first = match.group("first")
         later = match.group("later")
         if (
-            negative_relation.search(first)
-            and mapping_verb.search(first)
-            and re.search(r"\b(?:and|but)\b", later, re.I)
+            mapping_verb.search(first)
+            and mapping_is_negated(first)
+            and re.search(r"\b(?:and|but|however|yet)\b", later, re.I)
             and mapping_verb.search(later)
-            and not negative_relation.search(later)
-            and "explicit authorized project policy"
-            not in normalized[match.start():match.end()].lower()
+            and not mapping_is_negated(later)
+            and not positive_policy(statement_context(match.start()))
         ):
             fail(f"{label} contains a mixed Ponytail-to-Holytail axis mapping")
 
