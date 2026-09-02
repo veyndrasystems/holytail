@@ -82,6 +82,30 @@ if [[ "${HOLYTAIL_CODEX_SMOKE:-1}" == "1" ]]; then
     printf '%s' "${list_json}" | python3 -c \
       'import json,sys; data=json.load(sys.stdin); assert any(item["name"] == "holytail" and item["enabled"] for item in data["installed"])'
   )
+
+  # Exercise the authored repo marketplace directly with a disposable home.
+  export CODEX_HOME="${smoke_root}/codex-repo-home"
+  mkdir -p "${CODEX_HOME}"
+  repo_codex=(npx --yes "@openai/codex@${codex_version}" plugin)
+  (
+    "${repo_codex[@]}" marketplace add "${repo_root}" --json
+    available_json="$("${repo_codex[@]}" list --marketplace holytail --available --json)"
+    printf '%s' "${available_json}" | python3 -c \
+      'import json,sys; data=json.load(sys.stdin); assert any(item["name"] == "holytail" for item in data["available"])'
+    install_json="$("${repo_codex[@]}" add holytail@holytail --json)"
+    installed_path="$(printf '%s' "${install_json}" | python3 -c \
+      'import json,sys; print(json.load(sys.stdin)["installedPath"])')"
+    test -f "${installed_path}/hooks/hooks.json"
+    hook_json="$(printf '%s' '{"hook_event_name":"SessionStart","session_id":"repo-smoke"}' \
+      | CLAUDE_PLUGIN_ROOT="${installed_path}" node "${installed_path}/hooks/holytail-routing.cjs")"
+    printf '%s' "${hook_json}" | python3 -c \
+      'import json,sys; assert json.load(sys.stdin)["systemMessage"] == "HOLYTAIL:ROUTING · evidence=hook_observed"'
+    "${repo_codex[@]}" remove holytail@holytail --json
+    "${repo_codex[@]}" marketplace remove holytail --json
+    marketplaces_json="$("${repo_codex[@]}" marketplace list --json)"
+    printf '%s' "${marketplaces_json}" | python3 -c \
+      'import json,sys; data=json.load(sys.stdin); values=data.get("marketplaces", data if isinstance(data,list) else []); assert not any(item.get("name") == "holytail" for item in values)'
+  )
 fi
 
 printf '%s\n' "Holytail dotagents smoke test: OK"

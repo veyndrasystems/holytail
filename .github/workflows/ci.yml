@@ -19,6 +19,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 scripts/validate.py
+      - run: python3 tests/test_validate.py
+      - run: python3 scripts/benchmark.py --self-test
       - run: bash scripts/smoke-dotagents.sh
         env:
           HOLYTAIL_CODEX_SMOKE: "1"

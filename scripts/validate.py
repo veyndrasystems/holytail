@@ -14,11 +14,51 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "plugins" / "holytail"
 SKILL = PLUGIN / "skills" / "holytail"
+CATALOG = ROOT / ".agents" / "plugins" / "marketplace.json"
+EXPECTED_DEPLOYMENT_REF = "7c437f2cada0fa2dd5ac775e0f6183666577e1ef"
 EXPECTED_AUTHOR = {
     "name": "Veyndra Systems",
     "email": "veyndra-operator@users.noreply.github.com",
     "url": "https://github.com/veyndrasystems",
 }
+
+
+MACHINE_LOCAL_HOME_PATTERNS = (
+    ("unix-or-macos-home-path", re.compile(r"/(?:home|Users)/[^/\s]+(?:/|$)")),
+    ("windows-user-profile-path", re.compile(r"[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s]+(?:[\\/]|$)")),
+)
+
+INTERNAL_ROUTING_NOTE_PATTERNS = (
+    (
+        "delegation-or-assignment-logistics",
+        re.compile(
+            r"\bdelegat\w*\b[^\n.!?]{0,40}\bto\b|"
+            r"\bassign(?:ed|ment)\b[^\n.!?]{0,80}\b(?:to|by)\b|"
+            r"\b(?:delegat\w*|assign(?:ed|ment))\b[^\n.!?]{0,120}"
+            r"\b(?:worker|agent|model|reviewer|logistic\w*|detail\w*|"
+            r"instruction\w*|context\w*|route\w*)\b|"
+            r"\b(?:worker|agent|model|reviewer)\b[^\n.!?]{0,120}"
+            r"\b(?:delegat\w*|assign(?:ed|ment))\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "internal-model-worker-routing",
+        re.compile(
+            r"\binternal\b[^\n.!?]{0,120}\b(?:model|worker|agent|reviewer)\b|"
+            r"\b(?:model|worker|agent|reviewer)\b[^\n.!?]{0,120}\binternal\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "execution-routing-logistics",
+        re.compile(
+            r"\b(?:worker|agent|model|reviewer)\s+(?:run|routing|context|id)\b|"
+            r"\b(?:run|routing|context|id)\s+(?:for\s+)?(?:worker|agent|model|reviewer)\b",
+            re.IGNORECASE,
+        ),
+    ),
+)
 
 
 def fail(message: str) -> None:
@@ -35,9 +75,51 @@ def load_toml(path: Path) -> dict[str, object]:
         return tomllib.load(handle)
 
 
+def assert_no_machine_local_home_paths(source: str, label: str = "public source") -> None:
+    """Reject machine-local home paths without exposing matching content."""
+    for pattern_class, pattern in MACHINE_LOCAL_HOME_PATTERNS:
+        if pattern.search(source):
+            fail(f"{label} contains disallowed public path class: {pattern_class}")
+
+
+def assert_no_internal_routing_notes(source: str, label: str = "workflow artifact") -> None:
+    """Reject explicit execution-routing logistics without exposing the note."""
+    for pattern_class, pattern in INTERNAL_ROUTING_NOTE_PATTERNS:
+        if pattern.search(source):
+            fail(f"{label} contains disallowed public note class: {pattern_class}")
+
+
+def validate_public_privacy() -> None:
+    """Check text in tracked working-tree files before public publication."""
+    try:
+        tracked = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "-z"],
+            check=True,
+            capture_output=True,
+        ).stdout.split(b"\0")
+    except (OSError, subprocess.CalledProcessError) as error:
+        fail(f"could not enumerate tracked public files: {error}")
+
+    for raw_path in tracked:
+        if not raw_path:
+            continue
+        path = ROOT / os.fsdecode(raw_path)
+        try:
+            source = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        assert_no_machine_local_home_paths(str(source), str(path.relative_to(ROOT)))
+
+
 def require_files() -> None:
     required = [
         ROOT / "README.md",
+        ROOT / "LICENSE",
+        ROOT / "CHANGELOG.md",
+        ROOT / ".holytail" / "accepted.md",
+        ROOT / ".holytail" / "check.md",
+        ROOT / "scripts" / "benchmark.py",
+        CATALOG,
         ROOT / "agents.toml",
         ROOT / "agents" / "holytail.md",
         ROOT / "agents" / "semanticreviewer.toml",
@@ -54,6 +136,7 @@ def require_files() -> None:
         SKILL / "references" / "review.md",
         SKILL / "references" / "routing-context.md",
         SKILL / "references" / "soulmate-dotagents.md",
+        PLUGIN / "assets" / "icon.svg",
     ]
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
     if missing:
@@ -72,7 +155,7 @@ def validate_manifests() -> None:
         fail("plugin manifests must be JSON objects")
 
     if "$schema" in portable:
-        fail("dotagents 3.0.1 compatibility manifest must remain generalized legacy format")
+        fail("dotagents compatibility manifest must remain generalized legacy format")
     for manifest in (portable, native):
         if manifest.get("name") != "holytail":
             fail("plugin name mismatch")
@@ -80,6 +163,8 @@ def validate_manifests() -> None:
             fail("plugin version mismatch")
         if manifest.get("author") != EXPECTED_AUTHOR:
             fail("plugin author metadata mismatch")
+        if manifest.get("license") != "MIT":
+            fail("plugin license must be MIT")
 
     if native.get("skills") != "./skills/":
         fail("Codex plugin must declare ./skills/")
@@ -93,6 +178,30 @@ def validate_manifests() -> None:
     for field in ("displayName", "shortDescription", "developerName", "category", "capabilities"):
         if not interface.get(field):
             fail(f"Codex plugin interface.{field} is required")
+    for field in ("composerIcon", "logo", "logoDark"):
+        if not isinstance(interface.get(field), str) or not (PLUGIN / interface[field].removeprefix("./")).is_file():
+            fail(f"Codex plugin interface.{field} must point to a local asset")
+    prompts = interface.get("defaultPrompt")
+    if not isinstance(prompts, list) or not prompts or not all(
+        isinstance(prompt, str) and "$holytail:holytail" in prompt for prompt in prompts
+    ):
+        fail("Codex plugin default prompts must invoke $holytail:holytail")
+
+    catalog = load_json(CATALOG)
+    if not isinstance(catalog, dict) or catalog.get("name") != "holytail":
+        fail("repo marketplace catalog name mismatch")
+    if catalog.get("interface", {}).get("displayName") != "Holytail":
+        fail("repo marketplace display name mismatch")
+    entries = catalog.get("plugins")
+    if not isinstance(entries, list) or len(entries) != 1:
+        fail("repo marketplace must contain one plugin")
+    entry = entries[0]
+    if (entry.get("name"), entry.get("category")) != ("holytail", "Developer Tools"):
+        fail("repo marketplace plugin metadata mismatch")
+    if entry.get("source") != {"source": "local", "path": "./plugins/holytail"}:
+        fail("repo marketplace source mismatch")
+    if entry.get("policy") != {"installation": "AVAILABLE", "authentication": "ON_INSTALL"}:
+        fail("repo marketplace policy mismatch")
 
     deployment = load_toml(ROOT / "agents.toml")
     if deployment.get("version") != 1:
@@ -110,7 +219,7 @@ def validate_manifests() -> None:
     if {name: subagents.get(name, {}).get("path") for name in expected_paths} != expected_paths:
         fail("agents.toml subagent paths do not match authored sources")
     declarations = [*plugins, *deployment.get("subagents", [])]
-    if any(item.get("ref") != "9f9c9cc37c6b2c678733bc7296b59724bc1de390" for item in declarations):
+    if any(item.get("ref") != EXPECTED_DEPLOYMENT_REF for item in declarations):
         fail("all deployment declarations must pin the packaged source commit")
 
 
@@ -139,8 +248,169 @@ def validate_skill() -> None:
     short = re.search(r'^\s*short_description:\s*"([^"]+)"\s*$', openai_yaml, re.MULTILINE)
     if not short or not 25 <= len(short.group(1)) <= 64:
         fail("openai.yaml short_description must be 25-64 characters")
-    if "$holytail" not in openai_yaml:
-        fail("openai.yaml default prompt must explicitly invoke $holytail")
+    if "$holytail:holytail" not in openai_yaml:
+        fail("openai.yaml default prompt must explicitly invoke $holytail:holytail")
+
+
+def check_axis_collision(source: str, label: str = "status-bearing source") -> None:
+    """Check that Ponytail labels cannot be interpreted as Holytail axes."""
+    normalized = " ".join(source.split())
+    required = (
+        "Ponytail `lite`, `full`, `ultra`, and `off`",
+        "`full` is not `FULL`",
+        "`ultra` is not a Holytail signal",
+        "explicit authorized project policy",
+        "MODE-UNBOUND",
+        "reasoningEffort",
+    )
+    for phrase in required:
+        if phrase not in normalized:
+            fail(f"{label} is missing axis-contract phrase: {phrase}")
+    if re.search(r"(?i)(disable|turn off|do not use).*Ponytail", source):
+        fail(f"{label} tells users to disable Ponytail")
+    if re.search(r"Ponytail[^.\n]*(assign|trigger)[^.\n]*Holytail", source, re.I):
+        fail(f"{label} allows Ponytail to assign or trigger Holytail")
+    level_to_axis = re.compile(
+        r"`?(?:lite|full|ultra|off)`?\b"
+        r"(?P<relation>[^.!?;]{0,220}?)"
+        r"`?(?:FULL|ECO|INLINE|FORMAL)`?\b"
+    )
+    mapping_verb = re.compile(
+        r"\b(?:assigns?|maps?|means?|sets?|selects?|suppl(?:y|ies)|"
+        r"triggers?|impl(?:y|ies)|becomes?|is)\b",
+        re.I,
+    )
+    negative_relation = re.compile(
+        r"\b(?:is\s+not|never|does\s+not|cannot|can\s+not|can't|"
+        r"neither|unrelated)\b",
+        re.I,
+    )
+    for match in level_to_axis.finditer(normalized):
+        relation = match.group("relation")
+        if (
+            mapping_verb.search(relation)
+            and not negative_relation.search(relation)
+        ):
+            fail(f"{label} contains a direct Ponytail-to-Holytail axis mapping")
+
+
+def validate_status_contracts() -> None:
+    sources = {
+        "skill": (SKILL / "SKILL.md").read_text(encoding="utf-8"),
+        "routing": (SKILL / "references" / "routing-context.md").read_text(encoding="utf-8"),
+        "worker": (ROOT / "agents" / "holytail.md").read_text(encoding="utf-8"),
+        "worker profile": (PLUGIN / "profiles" / "holytail.md").read_text(encoding="utf-8"),
+        "reviewer": (ROOT / "agents" / "semanticreviewer.toml").read_text(encoding="utf-8"),
+        "reviewer profile": (PLUGIN / "profiles" / "semanticreviewer.md").read_text(encoding="utf-8"),
+    }
+    for label, source in sources.items():
+        check_axis_collision(source, label)
+        for phrase in ("hook_observed", "agent_declared", "Hook order is not authority"):
+            if phrase not in source:
+                fail(f"{label} is missing evidence boundary: {phrase}")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    check_axis_collision(readme, "README")
+    forbidden = (
+        "Holytail includes its own economy ladder",
+        "turn off that generic activation",
+        "self-contained minimizer",
+    )
+    for phrase in forbidden:
+        if phrase.lower() in readme.lower() or any(phrase.lower() in text.lower() for text in sources.values()):
+            fail(f"forbidden Holytail economy language remains: {phrase}")
+    for phrase in ("Ponytail makes the agent write less.", "Holytail checks that it did not drop"):
+        if phrase not in " ".join(readme.split()):
+            fail(f"README anchor missing: {phrase}")
+    if "$holytail:holytail" not in readme:
+        fail("README must use the installed $holytail:holytail skill name")
+
+
+def validate_workflow_artifacts() -> None:
+    accepted = (ROOT / ".holytail" / "accepted.md").read_text(encoding="utf-8")
+    check = (ROOT / ".holytail" / "check.md").read_text(encoding="utf-8")
+    assert_no_internal_routing_notes(accepted, ".holytail/accepted.md")
+    assert_no_internal_routing_notes(check, ".holytail/check.md")
+    for phrase in ("Contract ID:", "Implementation boundary", "I1", "I16"):
+        if phrase not in accepted:
+            fail(f"accepted artifact missing: {phrase}")
+    for phrase in ("Contract SHA-256:", "Accepted artifact", "Implementation snapshot", "Invariant-level findings", "I1", "I16"):
+        if phrase not in check:
+            fail(f"post-check artifact missing: {phrase}")
+
+    benchmark = (ROOT / "scripts" / "benchmark.py").read_text(encoding="utf-8")
+    for phrase in ("Arm A", "Arm B", "accepted_behaviors", "silent_drop", "status=not-run"):
+        if phrase not in benchmark and phrase.lower() not in benchmark.lower():
+            fail(f"benchmark scaffold missing: {phrase}")
+
+def assert_no_economy_directives(source: str, label: str = "authored source") -> None:
+    """Reject Holytail-owned economy directives while allowing active minimizer references."""
+    patterns = (
+        r"\bminimal implementation\b",
+        r"\bminimum implementation\b",
+        r"\bsmallest faithful (?:step|mechanism|implementation)\b",
+        r"\bsimplifications applied\b",
+        r"\brejected simplifications\b",
+        r"\beconomy ladder\b",
+        r"\bminimize only unconstrained\b",
+        r"\bminimize expected (?:rework|code)\b",
+        r"\bminimiz(?:e|es|ed|ing) (?:code|mechanism|implementation)\b",
+        r"\bprefer in order:\s*\n?\s*1\.\s*no new mechanism\b",
+    )
+    for pattern in patterns:
+        if re.search(pattern, source, re.I):
+            fail(f"{label} contains a Holytail economy directive: {pattern}")
+
+
+THIRD_PARTY_VERSION_PATTERNS = (
+    re.compile(r"@sentry/dotagents@(?:[~^<>=]*v?)?\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z.-]+)?\b"),
+    re.compile(r"@openai/codex@(?:[~^<>=]*v?)?\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z.-]+)?\b"),
+    re.compile(r"\bdotagents\s+(?:(?:version|release)\s+)?v?\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z.-]+)?\b"),
+    re.compile(r"\bCodex\s+(?:(?:version|release)\s+)?v?\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z.-]+)?\b"),
+    re.compile(r"\bSoulmate\s+(?:(?:version|release)\s+)?v?\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z.-]+)?\b"),
+)
+
+
+def assert_no_third_party_version_pins(source: str, label: str = "authored source") -> None:
+    """Reject exact ecosystem-version prose outside the smoke/CI allowlist."""
+    for pattern in THIRD_PARTY_VERSION_PATTERNS:
+        match = pattern.search(source)
+        if match:
+            fail(f"{label} contains a non-load-bearing third-party version pin: {match.group(0)}")
+
+
+def validate_authoring_boundaries() -> None:
+    mandatory = [
+        ROOT / "README.md",
+        ROOT / "CHANGELOG.md",
+        ROOT / "agents" / "holytail.md",
+        ROOT / "agents" / "semanticreviewer.toml",
+        PLUGIN / "profiles" / "holytail.md",
+        PLUGIN / "profiles" / "semanticreviewer.md",
+        SKILL / "SKILL.md",
+        SKILL / "agents" / "openai.yaml",
+        SKILL / "references" / "delivery.md",
+        SKILL / "references" / "routing-context.md",
+        SKILL / "references" / "soulmate-dotagents.md",
+    ]
+    for path in mandatory:
+        source = path.read_text(encoding="utf-8")
+        assert_no_economy_directives(source, str(path.relative_to(ROOT)))
+        assert_no_third_party_version_pins(source, str(path.relative_to(ROOT)))
+
+    allowed_pin_paths = {
+        ROOT / "scripts" / "smoke-dotagents.sh",
+        ROOT / ".github" / "workflows" / "ci.yml",
+    }
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path in allowed_pin_paths or path.suffix in {".svg", ".pyc"}:
+            continue
+        if ".git" in path.parts or "__pycache__" in path.parts:
+            continue
+        try:
+            source = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        assert_no_third_party_version_pins(source, str(path.relative_to(ROOT)))
 
 
 def validate_reviewer() -> None:
@@ -253,8 +523,12 @@ def validate_hooks() -> None:
 
 def main() -> int:
     require_files()
+    validate_public_privacy()
     validate_manifests()
     validate_skill()
+    validate_status_contracts()
+    validate_workflow_artifacts()
+    validate_authoring_boundaries()
     validate_reviewer()
     validate_markdown_links()
     validate_hooks()

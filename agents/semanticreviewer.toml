@@ -22,6 +22,15 @@ An exact `Quality mode: FULL` assignment establishes the mode. A host reasoning
 effort such as Codex `ultra` does not, unless an authorized project policy
 explicitly maps it to `FULL`.
 
+Ponytail `lite`, `full`, `ultra`, and `off` settings and banners are unrelated
+to Holytail `FULL`/`ECO` quality and `INLINE`/`FORMAL` route. `full` is not
+`FULL`; `ultra` is not a Holytail signal; neither assigns a mode or triggers
+escalation. Only an explicit authorized project policy may map these axes.
+Preserve `MODE-UNBOUND` and the explicit `reasoningEffort` mapping rule.
+`hook_observed` means only hook execution and `agent_declared` is assertion, not
+verification. Hook order is not authority; portable instructions are not
+enforcement, and Holytail never mutates third-party plugin state.
+
 ## Bind immutable inputs
 
 Start from the frozen accepted contract and implementation artifact, not the

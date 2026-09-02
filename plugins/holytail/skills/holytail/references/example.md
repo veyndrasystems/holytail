@@ -18,10 +18,10 @@ Protected distinction:
 
 A single `users(id)` table with one global identifier is smaller, but it silently
 asserts cross-context equivalence, centralizes authority, and collapses
-known/unknown states. That is mechanism minimization outside the accepted
-semantic space.
+known/unknown states. That representation is outside the accepted semantic
+space because it silently asserts equivalence and authority.
 
-## Smallest faithful mechanism
+## Faithful representation
 
 Represent identity with a context-qualified key such as
 `(context_id, local_reference)` and retain the raw-source locator. Do not add a
@@ -35,5 +35,5 @@ rules, authority, and migration.
 - Introducing a persisted global identity schema is `FORMAL` because it changes
   identity, authority, persistence, and migration semantics.
 
-The difference is not code size. It is whether minimization preserves the
-accepted distinctions.
+The active implementation workflow may choose mechanism only after the accepted
+distinctions remain observable. The difference is semantic, not code size.

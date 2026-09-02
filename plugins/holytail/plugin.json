@@ -1,7 +1,7 @@
 {
   "name": "holytail",
   "version": "0.1.0",
-  "description": "Preserve accepted product meaning before minimizing implementation mechanism.",
+  "description": "Check accepted behavior around an already-active implementation minimizer.",
   "author": {
     "name": "Veyndra Systems",
     "email": "veyndra-operator@users.noreply.github.com",
@@ -9,6 +9,7 @@
   },
   "homepage": "https://github.com/veyndrasystems/holytail",
   "repository": "https://github.com/veyndrasystems/holytail",
+  "license": "MIT",
   "keywords": [
     "semantic-preservation",
     "implementation-gate",

@@ -1,0 +1,20 @@
+{
+  "name": "holytail",
+  "interface": {
+    "displayName": "Holytail"
+  },
+  "plugins": [
+    {
+      "name": "holytail",
+      "source": {
+        "source": "local",
+        "path": "./plugins/holytail"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

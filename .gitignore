@@ -1,5 +1,9 @@
 # dotagents and host projections are generated, not authored package state.
-.agents/
+# Keep the authored repo marketplace; all other dotagents output is disposable.
+.agents/*
+!.agents/plugins/
+.agents/plugins/*
+!.agents/plugins/marketplace.json
 .claude/agents/
 .claude-plugin/marketplace.json
 .codex/agents/

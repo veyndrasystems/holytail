@@ -1,7 +1,7 @@
 {
   "name": "holytail",
   "version": "0.1.0",
-  "description": "Preserve accepted product meaning before minimizing implementation mechanism.",
+  "description": "Check accepted behavior around an already-active implementation minimizer.",
   "author": {
     "name": "Veyndra Systems",
     "email": "veyndra-operator@users.noreply.github.com",
@@ -9,6 +9,7 @@
   },
   "homepage": "https://github.com/veyndrasystems/holytail",
   "repository": "https://github.com/veyndrasystems/holytail",
+  "license": "MIT",
   "keywords": [
     "semantic-preservation",
     "implementation-gate",
@@ -18,8 +19,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Holytail",
-    "shortDescription": "Preserve meaning before minimizing code",
-    "longDescription": "A meaning-preserving implementation gate with inline and formal routes, bounded execution, and optional independent semantic review.",
+    "shortDescription": "Check behavior around an active minimizer",
+    "longDescription": "An implementation check with inline and formal routes, bounded execution, and optional independent review around an active minimizer.",
     "developerName": "Veyndra Systems",
     "category": "Developer Tools",
     "capabilities": [
@@ -28,9 +29,13 @@
     ],
     "websiteURL": "https://github.com/veyndrasystems/holytail",
     "defaultPrompt": [
-      "Use $holytail to implement this without losing accepted meaning.",
-      "Use $holytail to decide whether this change needs formal review."
+      "Use $holytail:holytail to check implementation against accepted behavior.",
+      "Use $holytail:holytail to check an active minimizer against accepted behavior.",
+      "Use $holytail:holytail for a contract-bound implementation review."
     ],
-    "brandColor": "#6D5EF6"
+    "brandColor": "#6D5EF6",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/icon.svg",
+    "logoDark": "./assets/icon.svg"
   }
 }

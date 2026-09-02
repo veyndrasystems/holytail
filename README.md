@@ -1,157 +1,183 @@
 # Holytail
 
-Holytail is a meaning-preserving implementation gate for Codex, dotagents,
-and optional Soulmate workflows. It freezes accepted product meaning before
-minimizing implementation mechanism. Clear work stays inline; material semantic
-risk escalates to a bounded worker and, when useful, a fresh read-only reviewer.
+Minimizers can make an agent's implementation shorter by silently dropping a
+behavior you already agreed to. Ponytail makes the agent write less. Holytail checks that it did not drop something you already agreed to.
 
-This repository contains three distinct planes:
+Holytail freezes accepted meaning before your active minimizer runs, then reads
+that meaning back against the implementation. It performs no minimization and
+does not replace, configure, or disable your minimizer.
 
-| Plane | Authored source | Purpose |
-|---|---|---|
-| Codex plugin | `plugins/holytail/` | Discover the skill and present routing at session start |
-| dotagents distribution | `agents.toml` and `agents/` | Project the plugin and subagents into supported hosts |
-| Soulmate control | the consumer project's `soulmate.json` and `soulmate/` | Own authority, workflow, memory rights, and run evidence |
+## How it works
 
-Generated `.agents/`, `.codex/`, and `.claude/` files are disposable
-projections. Do not edit or commit them as authored Holytail state.
+1. The operator or authorized lead supplies the accepted increment.
+2. Holytail brackets the active minimizer with a pre-work freeze and a
+   post-work check.
+3. The check reports each invariant, its evidence, and unknowns.
 
-## Why the banner was missing
+Without Soulmate, `.holytail/accepted.md` is the standalone, human-readable
+authority artifact and `.holytail/check.md` is the diffable post-check artifact.
+The check names the accepted artifact and implementation snapshot; a banner or
+bare pass is not a semantic check. Keep these artifacts until deliberately
+archived or deleted. When Soulmate is present, it remains optional project
+authority, evidence owner, and final acceptor. Holytail does not initialize it,
+grant memory rights, or create a second run format.
 
-The original package had a routing fragment but no installable Codex plugin or
-`SessionStart` hook. dotagents subagent projection cannot create a Codex session
-banner by itself. After the plugin is installed, its trusted hook displays:
+## Install in Codex (primary)
+
+Add the public repository marketplace by owner/repository name, then install the
+plugin:
+
+```sh
+codex plugin marketplace add veyndrasystems/holytail --json
+codex plugin add holytail@holytail --json
+```
+
+Open `/hooks`, review and trust the hook, then start a new session. The hook's
+`HOLYTAIL:ROUTING · evidence=hook_observed` line means only that the hook ran.
+It does not prove activation, compliance, or semantic preservation.
+
+The catalog is `.agents/plugins/marketplace.json`; it is a repo marketplace,
+not universal-directory publication. It points to `./plugins/holytail` and is
+the only authored file under the otherwise disposable `.agents/` projection
+tree.
+
+## First use and expected files
+
+Copy this prompt into an implementation session:
 
 ```text
-HOLYTAIL:ROUTING · evidence=hook_observed
+Use $holytail:holytail. Before editing, freeze the accepted behavior in
+.holytail/accepted.md. Keep the user's active minimizer active. After editing,
+reread that same accepted artifact and write a diffable .holytail/check.md
+against the implementation snapshot. The operator or authorized lead owns the
+accepted content; do not invent acceptance.
 ```
 
-That line proves only that Codex ran the routing hook. It does not claim that a
-task has entered Holytail or that semantic compliance was verified. Every
-user-visible response while Holytail is active declares both independent axes,
-for example:
+In a standalone project, the expected evidence files are:
 
-```text
-Holytail :FULL · INLINE · evidence=agent_declared
-Holytail :FULL · FORMAL · evidence=agent_declared
-```
+| File | Role |
+|---|---|
+| `.holytail/accepted.md` | Operator/authorized-lead-owned accepted behavior before edits |
+| `.holytail/check.md` | Diffable read-back against the implementation snapshot |
 
-`FULL`/`ECO` are the existing team execution-quality modes. `INLINE`/`FORMAL`
-are Holytail routes. Holytail never redefines one axis as the other. If no
-quality mode was assigned, it reports `MODE-UNBOUND` instead of inventing one.
-An exact assignment such as `Quality mode: FULL` is sufficient. Codex
-`reasoningEffort=ultra` alone is not `FULL`; deriving `FULL` from it requires an
-explicit mapping in the project's authorized policy.
+See the [semantic-contract reference](plugins/holytail/skills/holytail/references/semantic-contract.md)
+for the full formal fields. In a Soulmate project, use its existing assignment,
+boundary, evidence, and acceptance workflow; do not create parallel state.
 
-## Install with dotagents
+Generated host projections are disposable:
 
-`agents.toml` is a consumer deployment declaration, not a manifest that is
-transitively imported merely because the plugin was installed. Merge its
-`[[plugins]]` and `[[subagents]]` entries into the target project's existing
-manifest; do not overwrite existing agents or trust rules. If the project has a
-restrictive `[trust]` table, the SSH source used here must be allowed as a git
-domain path. Append this value without replacing existing entries:
+| Host | Discovery and activation | Tested behavior | Runtime enforcement | Instruction/protocol | Host/operator-owned gap |
+|---|---|---|---|---|---|
+| Codex | Repo marketplace, plugin add, trusted `SessionStart` hook | Validator and isolated marketplace smoke exercise install/list/hook/remove | Native `semanticreviewer` profile is read-only only when that profile is actually used | Skill, status axes, contract, and delivery protocol | Operator must review/trust hook and observe a real new-session result |
+| Claude projection | dotagents optional projection | Existing dotagents smoke checks projection and hook files | Instructions do not enforce read-only behavior | Portable profiles and hook configuration | Host trust and enforcement are Claude/operator-owned |
+| Soulmate (optional) | Existing configured project workflow | No Soulmate state is initialized by this package | Soulmate boundary and run controls | Soulmate owns authority, evidence, memory rights, and final acceptance | Existing Soulmate setup and decisions are operator-owned |
 
-```toml
-[trust]
-git_domains = ["github.com/veyndrasystems/holytail"]
-```
+`agent_declared` is an assertion, not verification. Independent verification is
+separate evidence. Portable hosts carry instructions only. Hook order is not
+authority. Holytail never mutates third-party plugin state.
 
-The equivalent project-scoped command is:
+## Ponytail integration and axes
+
+Keep Ponytail active. Ponytail `lite`, `full`, `ultra`, and `off` settings and any
+Ponytail banner or intensity are unrelated to Holytail's `FULL`/`ECO` quality
+and `INLINE`/`FORMAL` route. `full` is not `FULL`; `ultra` is not a Holytail
+signal. Neither assigns a Holytail axis or triggers escalation. Only an
+explicit authorized project policy can define a mapping. If no exact quality
+assignment exists, Holytail reports `MODE-UNBOUND`; a `reasoningEffort` label
+supplies quality only when that policy explicitly maps it.
+
+## Update and uninstall
+
+To refresh a configured repository marketplace and reinstall its plugin:
 
 ```sh
-npx --yes @sentry/dotagents@3.0.1 --project trust add github.com/veyndrasystems/holytail
-```
-
-For project scope:
-
-```sh
-npx --yes @sentry/dotagents@3.0.1 --project install
-npx --yes @sentry/dotagents@3.0.1 --project sync
-npx --yes @sentry/dotagents@3.0.1 --project doctor --fix
-npx --yes @sentry/dotagents@3.0.1 --project doctor
-```
-
-`doctor --fix` is an explicit consumer-repository repair step. Review its diff;
-among other supported repairs it merges the generated-state ignore entries such
-as `agents.lock` and `.agents/.gitignore` that a fresh Soulmate project may not
-yet ignore. Private-repository authentication must already be available to git;
-change the source URL in the consumer manifest if that environment uses HTTPS
-credentials instead of SSH.
-
-dotagents stages the plugin bundle, marketplaces, and subagent projections; it
-does not enable the native Codex plugin. From the target project root, install
-the generated local marketplace entry:
-
-```sh
-codex plugin marketplace add . --json
-codex plugin list --marketplace dotagents-local --available --json
-codex plugin add holytail@dotagents-local --json
+codex plugin marketplace upgrade holytail --json
+codex plugin remove holytail@holytail --json
+codex plugin add holytail@holytail --json
 codex plugin list --json
 ```
 
-These commands intentionally describe project scope, which is the recommended
-scope for a Soulmate project. For user-global dotagents deployment, omit
-`--project` from the dotagents commands and add the generated marketplace from
-the dotagents base root: `codex plugin marketplace add "$HOME" --json` for the
-default layout, or `codex plugin marketplace add "$DOTAGENTS_HOME" --json` when
-that variable selects a custom base root. Do not run `marketplace add .` from an
-arbitrary working directory.
+If re-adding fails, the plugin remains absent. Keep the marketplace, inspect its
+available state, and retry:
 
-The dotagents 3.0.1 install may warn that the authored Codex manifest is not
-managed by dotagents. That warning is expected: the native manifest is retained
-deliberately for Codex UI metadata and lifecycle-hook behavior; `doctor` must
-still report the runtime artifacts intact.
+```sh
+codex plugin marketplace list --json
+codex plugin list --marketplace holytail --available --json
+codex plugin add holytail@holytail --json
+```
 
-In Codex, open `/hooks`, review and trust the bundled hook, then start a new
-session. An existing conversation does not rerun `SessionStart`. The explicit
-plugin skill form is `$holytail:holytail`; implicit activation is limited to
-implementation work matching the skill description.
+Immutable rollback requires an actually published known-good repository ref;
+this documentation does not invent one.
 
-Expected project projections include:
+To remove it, uninstall the plugin first. Remove the marketplace only when no
+other plugin uses it, then list afterward:
 
-- `.agents/plugins/holytail/skills/holytail/`
-- `.agents/plugins/holytail/profiles/holytail.md` and
-  `.agents/plugins/holytail/profiles/semanticreviewer.md`
-- `.agents/agents/holytail.md` and `.agents/agents/semanticreviewer.md`
-- `.codex/agents/holytail.toml` and `.codex/agents/semanticreviewer.toml`
-- `.claude/agents/holytail.md` and `.claude/agents/semanticreviewer.md`
+```sh
+codex plugin remove holytail@holytail --json
+codex plugin marketplace remove holytail --json
+codex plugin list --json
+```
 
-The Codex reviewer projection is runtime-enforced with
-`sandbox_mode = "read-only"`. Other hosts receive the same reviewer instructions,
-but their read-only enforcement depends on that host or on Soulmate boundaries.
+These commands do not automatically delete `.holytail/accepted.md`,
+`.holytail/check.md`, or generated projections. Remove or archive evidence only
+deliberately. Optional dotagents removal reverses only Holytail declarations in
+the consumer manifest, then runs `dotagents sync` and `dotagents doctor`; shared
+ignores, locks, trust, and native installation may remain.
 
-## Ponytail coexistence
+## Optional dotagents deployment
 
-Holytail includes its own economy ladder, so a generic always-on Ponytail plugin
-is not required. A Ponytail `:FULL` or `:ECO` banner may supply the team quality
-label, but it must not bypass the Holytail gate or choose the Holytail route.
-Multiple session hooks run independently; hook order is not authority. If the
-installed Ponytail instructions require direct minimization before Holytail, turn
-off that generic activation for the project or session and start a new session.
-Holytail never changes third-party Ponytail state automatically.
+Merge this repository's `[[plugins]]` and `[[subagents]]` declarations into the
+consumer `agents.toml` without replacing existing entries. Add project trust
+first without replacing existing trust rules, then run the actual project-scoped
+commands:
 
-## Soulmate integration
+```sh
+npx --yes @sentry/dotagents --project trust add github.com/veyndrasystems/holytail
+npx --yes @sentry/dotagents --project install
+npx --yes @sentry/dotagents --project sync
+npx --yes @sentry/dotagents --project doctor --fix
+npx --yes @sentry/dotagents --project doctor
+```
 
-Soulmate remains the project-specific authority and evidence layer. Holytail
-does not initialize Soulmate, invent a second persisted run format, grant itself
-memory rights, or record final acceptance. Use
-[the integration guide](plugins/holytail/skills/holytail/references/soulmate-dotagents.md) to
-import the clean plugin profiles into `soulmate/agents/`, grant only
-project-specific rights, and add worker-only or worker-plus-reviewer workflows.
+Review the generated diff. dotagents projects Claude/Codex files under
+`.agents/`, `.codex/`, and `.claude/`; those projections are disposable. Its
+declaration and sync do not enable native Codex installation or grant Soulmate
+authority. Remove only Holytail declarations when uninstalling, then sync and
+doctor; do not claim automatic cleanup.
 
-## Validate
+## Benchmark scaffold (no result claimed)
+
+`python3 scripts/benchmark.py --self-test` runs a deterministic fixture and
+prints `status=not-run` for real model evaluation. `python3 scripts/benchmark.py`
+prints the same single-command evaluation plan. Arm A runs the minimizer alone;
+arm B runs the same minimizer bracketed by Holytail. Each task declares accepted
+behaviors, and the primary metric is the count of accepted behaviors silently
+dropped by the final implementation. Record per-task results and variance only
+after real runs; model, prompt, task-corpus, and host differences are caveats.
+This repository publishes no preservation number.
+
+## Validate and release
 
 ```sh
 python3 scripts/validate.py
+python3 tests/test_validate.py
 bash scripts/smoke-dotagents.sh
+python3 scripts/benchmark.py --self-test
 ```
 
-The first command validates package structure, manifests, references, status
-contracts, and hook output without third-party Python dependencies. The smoke
-test installs a copied bundle into a temporary dotagents consumer, verifies
-Codex/Claude projections and the Codex reviewer sandbox, adds the generated
-marketplace to an isolated Codex 0.152.1 home, and installs Holytail. Set
-`HOLYTAIL_CODEX_SMOKE=0` only when intentionally skipping the native Codex
-stage. Interactive hook trust and observing the next real session banner remain
-operator actions.
+The validator checks required artifacts, links, metadata, axes, evidence
+limits, workflow language, and catalog shape. The focused test mutates the axis
+contract and proves the validator rejects economy, pin, and axis regressions. The dotagents smoke
+uses a temporary consumer and preserves generated projection checks; its native
+stage uses a temporary Codex home and installs, lists, exercises the current
+hook, removes the plugin, removes the marketplace, and lists again. Hook trust
+and semantic preservation in a real session remain unexercised unless observed.
+
+Before a public release, review the exact diff, run the validation commands,
+and confirm the documented checks do not create commits, tags, releases, or
+publish. The operator chooses the version and tag, updates the changelog, and
+separately authorizes publication through the normal repository tooling.
+
+See [CHANGELOG.md](CHANGELOG.md) for release history and
+[LICENSE](LICENSE) for licensing. Troubleshooting details, including why the
+banner may be absent, are kept in the changelog and the hook/install sections.

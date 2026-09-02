@@ -1,7 +1,7 @@
 interface:
   display_name: "Holytail"
-  short_description: "Preserve meaning before minimizing implementation"
-  default_prompt: "Use $holytail to preserve accepted meaning while implementing the smallest faithful mechanism."
+  short_description: "Check behavior around an active minimizer"
+  default_prompt: "Use $holytail:holytail to check an active minimizer against accepted behavior."
 
 policy:
   allow_implicit_invocation: true

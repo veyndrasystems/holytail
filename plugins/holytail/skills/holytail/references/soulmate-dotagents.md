@@ -1,7 +1,9 @@
 # Soulmate and dotagents integration
 
 Holytail's authored content, dotagents deployment, and Soulmate authority are
-separate planes. Normal Codex sessions must still work without Soulmate.
+separate planes. Normal Codex sessions must still work without Soulmate. The
+user's active minimizer remains active; Holytail brackets it with an accepted
+read and a post-implementation check.
 
 ## 1. Deploy with dotagents
 
@@ -102,7 +104,8 @@ soulmate run start holytail_reviewed \
 - reviewer: `approved | rework | blocked`
 - lead: scope changes, supersession, rejection, and final acceptance
 
-A missing product decision is a `blocked` detail. In Soulmate v0.9.3, a worker
+A missing product decision is a `blocked` detail. In a current Soulmate
+workflow, a worker
 or reviewer `blocked` submission immediately terminates that run; it is not
 automatically routed into a lead stage. The lead or operator inspects the sealed
 artifact, obtains the authorized decision, and explicitly creates a successor,
