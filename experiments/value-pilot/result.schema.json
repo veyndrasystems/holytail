@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veyndra.systems/holytail/value-pilot-result-v1.schema.json",
+  "title": "Holytail value pilot result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "task_id",
+    "arm_id",
+    "manifest_sha256",
+    "task_sha256",
+    "prompt_sha256",
+    "visible_check_sha256",
+    "starter_sha256",
+    "status",
+    "visible",
+    "oracle",
+    "semantic_remainder",
+    "implementation",
+    "environment",
+    "cost",
+    "reviewer",
+    "correct_blockers",
+    "unnecessary_blockers",
+    "silent_loss",
+    "evidence_limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "value-pilot-result-v1"},
+    "run_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "arm_id": {"enum": ["A", "B", "C"]},
+    "manifest_sha256": {"$ref": "#/$defs/hash"},
+    "task_sha256": {"$ref": "#/$defs/hash"},
+    "prompt_sha256": {"$ref": "#/$defs/hash"},
+    "visible_check_sha256": {"$ref": "#/$defs/hash"},
+    "starter_sha256": {"$ref": "#/$defs/hash"},
+    "status": {"enum": ["completed", "blocked"]},
+    "visible": {"$ref": "#/$defs/check"},
+    "oracle": {"$ref": "#/$defs/check"},
+    "semantic_remainder": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/remainder"}
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changed_files", "changed_lines", "new_dependencies", "new_abstractions"],
+      "properties": {
+        "changed_files": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "changed_lines": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["added", "deleted"],
+          "properties": {
+            "added": {"type": "integer", "minimum": 0},
+            "deleted": {"type": "integer", "minimum": 0}
+          }
+        },
+        "new_dependencies": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "new_abstractions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoning", "host", "tools", "repository", "ponytail"],
+      "properties": {
+        "model": {"$ref": "#/$defs/unknownString"},
+        "reasoning": {"$ref": "#/$defs/unknownString"},
+        "host": {"$ref": "#/$defs/unknownString"},
+        "tools": {"$ref": "#/$defs/unknownString"},
+        "repository": {"$ref": "#/$defs/unknownString"},
+        "ponytail": {"$ref": "#/$defs/unknownString"}
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implementation", "protocol", "reviewer"],
+      "properties": {
+        "implementation": {"$ref": "#/$defs/cost"},
+        "protocol": {"$ref": "#/$defs/cost"},
+        "reviewer": {"$ref": "#/$defs/cost"}
+      }
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "verdict", "caught_invariants", "disagreement", "detail"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "verdict": {"enum": ["approved", "rework", "blocked", "not-run"]},
+        "caught_invariants": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "disagreement": {"type": ["boolean", "null"]},
+        "detail": {"$ref": "#/$defs/unknownString"}
+      }
+    },
+    "correct_blockers": {"type": "array", "items": {"$ref": "#/$defs/blocker"}},
+    "unnecessary_blockers": {"type": "array", "items": {"$ref": "#/$defs/blocker"}},
+    "silent_loss": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detected", "invariants"],
+      "properties": {
+        "detected": {"type": "boolean"},
+        "invariants": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "evidence_limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "unknownString": {"type": ["string", "null"]},
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "preserved_invariants", "lost_invariants", "detail"],
+      "properties": {
+        "status": {"enum": ["pass", "fail", "not-run"]},
+        "preserved_invariants": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "lost_invariants": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "detail": {"$ref": "#/$defs/unknownString"}
+      }
+    },
+    "remainder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariant_id", "status", "detail", "source"],
+      "properties": {
+        "invariant_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["preserved", "deferred", "missing"]},
+        "detail": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1}
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariant_id", "detail", "evidence"],
+      "properties": {
+        "invariant_id": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1},
+        "evidence": {"type": "string", "minLength": 1}
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "input_tokens", "output_tokens", "duration_ms"],
+      "properties": {
+        "model_calls": {"type": ["integer", "null"], "minimum": 0},
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "duration_ms": {"type": ["integer", "null"], "minimum": 0}
+      }
+    }
+  }
+}

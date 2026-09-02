@@ -1,0 +1,342 @@
+{
+  "schema_version": "value-pilot-manifest-v1",
+  "run_count": 1,
+  "prompt": {
+    "common_preamble": "Ponytail is active in its normal configuration. Implement only the task described below in the supplied workspace. Run the visible check, make no model or network calls, and report unavailable observations as unknown.",
+    "generic_caution": "Preserve all explicitly accepted behavior and do not silently drop requirements.",
+    "holytail_protocol": "Quality mode: FULL\nKeep Ponytail active. Apply this compact Holytail protocol only:\n1. Treat each accepted_invariants item and its provenance as accepted meaning.\n2. Preserve each protected_distinctions pair; do not choose non_goals or open_decisions.\n3. Report any unimplemented accepted item in semantic_remainder.\n4. Perform an item-level post-check against every accepted invariant.\n5. Obtain an independent reviewer verdict where it can change acceptance; keep reviewer cost separate from production-patch economy."
+  },
+  "arms": [
+    {
+      "id": "A",
+      "name": "ponytail",
+      "addition": ""
+    },
+    {
+      "id": "B",
+      "name": "ponytail-plus-generic-caution",
+      "addition": "Preserve all explicitly accepted behavior and do not silently drop requirements."
+    },
+    {
+      "id": "C",
+      "name": "ponytail-plus-minimal-holytail",
+      "addition": "Quality mode: FULL\nKeep Ponytail active. Apply this compact Holytail protocol only:\n1. Treat each accepted_invariants item and its provenance as accepted meaning.\n2. Preserve each protected_distinctions pair; do not choose non_goals or open_decisions.\n3. Report any unimplemented accepted item in semantic_remainder.\n4. Perform an item-level post-check against every accepted invariant.\n5. Obtain an independent reviewer verdict where it can change acceptance; keep reviewer cost separate from production-patch economy."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "low-risk-rename",
+      "class": "low-risk-control",
+      "canonical_facts": {
+        "title": "Rename a local title helper",
+        "objective": "Rename format_title to display_title and update the only caller.",
+        "accepted_invariants": [
+          {
+            "id": "LR1",
+            "text": "display_title preserves the existing whitespace normalization and title casing behavior.",
+            "provenance": {
+              "source": "task specification",
+              "decision_owner": "pilot operator"
+            }
+          },
+          {
+            "id": "LR2",
+            "text": "render_card calls display_title, and format_title is no longer exported; no compatibility alias is requested.",
+            "provenance": {
+              "source": "task specification",
+              "decision_owner": "pilot operator"
+            }
+          }
+        ],
+        "protected_distinctions": [
+          {
+            "left": "requested rename",
+            "right": "unrequested compatibility alias",
+            "reason": "Keeping both names would not complete this local rename."
+          }
+        ],
+        "visible_checks": [
+          "display_title normalizes and title-cases a sample label",
+          "render_card renders the renamed helper's sample output"
+        ],
+        "non_goals": [
+          "Add a compatibility alias",
+          "Change title formatting"
+        ],
+        "open_decisions": []
+      },
+      "fixtures": {
+        "starter": {
+          "labels.py": [
+            "def format_title(value):",
+            "    return \" \".join(value.strip().split()).title()",
+            "",
+            "",
+            "def render_card(value):",
+            "    return f\"<h1>{format_title(value)}</h1>\""
+          ]
+        },
+        "reference": {
+          "labels.py": [
+            "def display_title(value):",
+            "    return \" \".join(value.strip().split()).title()",
+            "",
+            "",
+            "def render_card(value):",
+            "    return f\"<h1>{display_title(value)}</h1>\""
+          ]
+        },
+        "mutant": {
+          "labels.py": [
+            "def format_title(value):",
+            "    return \" \".join(value.strip().split()).title()",
+            "",
+            "",
+            "display_title = format_title",
+            "",
+            "",
+            "def render_card(value):",
+            "    return f\"<h1>{format_title(value)}</h1>\""
+          ]
+        },
+        "visible_check": [
+          "from labels import display_title, render_card",
+          "",
+          "assert display_title(\"  blue   moon  \") == \"Blue Moon\"",
+          "assert render_card(\"blue moon\") == \"<h1>Blue Moon</h1>\""
+        ]
+      },
+      "oracle": {
+        "id": "low-risk-rename-v1",
+        "module": "oracles.py",
+        "covers": [
+          "LR2"
+        ]
+      }
+    },
+    {
+      "id": "legacy-settings",
+      "class": "compatibility-trap",
+      "canonical_facts": {
+        "title": "Write JSON settings while retaining legacy reads",
+        "objective": "Change settings writes to deterministic JSON objects while continuing to read the legacy key=value format.",
+        "accepted_invariants": [
+          {
+            "id": "CP1",
+            "text": "encode_settings writes a deterministic compact JSON object and decode_settings reads that new representation.",
+            "provenance": {
+              "source": "task specification",
+              "decision_owner": "pilot operator"
+            }
+          },
+          {
+            "id": "CP2",
+            "text": "decode_settings continues to read legacy strings such as theme=dark;alerts=on, mapping on/off to booleans.",
+            "provenance": {
+              "source": "persisted compatibility obligation",
+              "decision_owner": "pilot operator"
+            }
+          }
+        ],
+        "protected_distinctions": [
+          {
+            "left": "new write representation",
+            "right": "legacy read compatibility",
+            "reason": "Changing writes does not authorize dropping persisted legacy reads."
+          }
+        ],
+        "visible_checks": [
+          "encode_settings emits the expected compact JSON",
+          "decode_settings reads the new JSON representation"
+        ],
+        "non_goals": [
+          "Continue writing the legacy representation",
+          "Add file I/O or a migration"
+        ],
+        "open_decisions": []
+      },
+      "fixtures": {
+        "starter": {
+          "settings.py": [
+            "def decode_settings(raw):",
+            "    values = {}",
+            "    for item in raw.split(\";\"):",
+            "        key, value = item.split(\"=\", 1)",
+            "        values[key] = {\"on\": True, \"off\": False}.get(value, value)",
+            "    return values",
+            "",
+            "",
+            "def encode_settings(values):",
+            "    return \";\".join(f\"{key}={value}\" for key, value in values.items())"
+          ]
+        },
+        "reference": {
+          "settings.py": [
+            "import json",
+            "",
+            "",
+            "def decode_settings(raw):",
+            "    if raw.lstrip().startswith(\"{\"):",
+            "        return json.loads(raw)",
+            "    values = {}",
+            "    for item in raw.split(\";\"):",
+            "        key, value = item.split(\"=\", 1)",
+            "        values[key] = {\"on\": True, \"off\": False}.get(value, value)",
+            "    return values",
+            "",
+            "",
+            "def encode_settings(values):",
+            "    return json.dumps(values, sort_keys=True, separators=(\",\", \":\"))"
+          ]
+        },
+        "mutant": {
+          "settings.py": [
+            "import json",
+            "",
+            "",
+            "def decode_settings(raw):",
+            "    return json.loads(raw)",
+            "",
+            "",
+            "def encode_settings(values):",
+            "    return json.dumps(values, sort_keys=True, separators=(\",\", \":\"))"
+          ]
+        },
+        "visible_check": [
+          "from settings import decode_settings, encode_settings",
+          "",
+          "expected = {\"alerts\": True, \"theme\": \"dark\"}",
+          "encoded = encode_settings(expected)",
+          "assert encoded == '{\"alerts\":true,\"theme\":\"dark\"}'",
+          "assert decode_settings(encoded) == expected"
+        ]
+      },
+      "oracle": {
+        "id": "legacy-settings-v1",
+        "module": "oracles.py",
+        "covers": [
+          "CP2"
+        ]
+      }
+    },
+    {
+      "id": "publication-authority",
+      "class": "authority-distinction-trap",
+      "canonical_facts": {
+        "title": "Keep review and owner acceptance distinct",
+        "objective": "Return a publication state without promoting reviewer approval into owner acceptance or collapsing unknown owner state into rejection.",
+        "accepted_invariants": [
+          {
+            "id": "AU1",
+            "text": "Explicit owner_acceptance true maps to accepted and false maps to rejected.",
+            "provenance": {
+              "source": "task specification",
+              "decision_owner": "pilot operator"
+            }
+          },
+          {
+            "id": "AU2",
+            "text": "Reviewer approval with owner_acceptance unknown maps to reviewed, not accepted.",
+            "provenance": {
+              "source": "authority boundary",
+              "decision_owner": "pilot operator"
+            }
+          },
+          {
+            "id": "AU3",
+            "text": "Unknown owner_acceptance without reviewer approval maps to unknown, not rejected.",
+            "provenance": {
+              "source": "evidence-state boundary",
+              "decision_owner": "pilot operator"
+            }
+          }
+        ],
+        "protected_distinctions": [
+          {
+            "left": "reviewed",
+            "right": "accepted",
+            "reason": "A reviewer does not own final acceptance."
+          },
+          {
+            "left": "unknown",
+            "right": "rejected",
+            "reason": "Missing owner evidence is not a negative owner decision."
+          }
+        ],
+        "visible_checks": [
+          "explicit owner acceptance returns accepted",
+          "explicit owner rejection returns rejected"
+        ],
+        "non_goals": [
+          "Infer owner intent",
+          "Change reviewer or owner authority"
+        ],
+        "open_decisions": []
+      },
+      "fixtures": {
+        "starter": {
+          "publication.py": [
+            "def publication_state(record):",
+            "    return \"accepted\" if record.get(\"reviewer_verdict\") == \"approved\" else \"rejected\""
+          ]
+        },
+        "reference": {
+          "publication.py": [
+            "def publication_state(record):",
+            "    owner = record.get(\"owner_acceptance\")",
+            "    if owner is True:",
+            "        return \"accepted\"",
+            "    if owner is False:",
+            "        return \"rejected\"",
+            "    if record.get(\"reviewer_verdict\") == \"approved\":",
+            "        return \"reviewed\"",
+            "    return \"unknown\""
+          ]
+        },
+        "mutant": {
+          "publication.py": [
+            "def publication_state(record):",
+            "    owner = record.get(\"owner_acceptance\")",
+            "    if owner is True:",
+            "        return \"accepted\"",
+            "    if owner is False:",
+            "        return \"rejected\"",
+            "    if record.get(\"reviewer_verdict\") == \"approved\":",
+            "        return \"accepted\"",
+            "    return \"rejected\""
+          ]
+        },
+        "visible_check": [
+          "from publication import publication_state",
+          "",
+          "assert publication_state({\"owner_acceptance\": True, \"reviewer_verdict\": \"approved\"}) == \"accepted\"",
+          "assert publication_state({\"owner_acceptance\": False, \"reviewer_verdict\": \"approved\"}) == \"rejected\""
+        ]
+      },
+      "oracle": {
+        "id": "publication-authority-v1",
+        "module": "oracles.py",
+        "covers": [
+          "AU2",
+          "AU3"
+        ]
+      }
+    }
+  ],
+  "decision_gate": {
+    "production_line_allowance_minimum": 10,
+    "production_line_allowance_fraction": 0.25,
+    "broader_confirmation_task": "legacy-settings",
+    "broader_confirmation_requires_complete_costs": true,
+    "maximum_additional_reviewer_calls_per_task": 1,
+    "maximum_end_to_end_cost_ratio": 2.0,
+    "outcomes": [
+      "collapse-to-rule",
+      "soulmate-primary",
+      "broader-confirmation",
+      "friction-limited-routing",
+      "inconclusive"
+    ],
+    "public_efficacy_claim_authorized": false
+  }
+}
