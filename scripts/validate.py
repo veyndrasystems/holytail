@@ -24,7 +24,7 @@ EXPECTED_AUTHOR = {
 
 
 MACHINE_LOCAL_HOME_PATTERNS = (
-    ("unix-or-macos-home-path", re.compile(r"/(?:home|Users)/[^/\s]+(?:/|$)")),
+    ("unix-or-macos-home-path", re.compile(r"/(?:home|Users|root|var/root)/[^/\s]+(?:/|$)")),
     ("windows-user-profile-path", re.compile(r"[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s]+(?:[\\/]|$)")),
 )
 
@@ -55,6 +55,14 @@ INTERNAL_ROUTING_NOTE_PATTERNS = (
         re.compile(
             r"\b(?:worker|agent|model|reviewer)\s+(?:run|routing|context|id)\b|"
             r"\b(?:run|routing|context|id)\s+(?:for\s+)?(?:worker|agent|model|reviewer)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "passive-routing-logistics",
+        re.compile(
+            r"\brout\w*\s+to\s+(?:(?:the|a)\s+)?(?:model|worker|agent|reviewer)\b|"
+            r"\b(?:model|worker|agent|reviewer)\s+was\s+rout\w*\b",
             re.IGNORECASE,
         ),
     ),
@@ -276,8 +284,10 @@ def check_axis_collision(source: str, label: str = "status-bearing source") -> N
         r"`?(?:FULL|ECO|INLINE|FORMAL)`?\b"
     )
     mapping_verb = re.compile(
-        r"\b(?:assigns?|maps?|means?|sets?|selects?|suppl(?:y|ies)|"
-        r"triggers?|impl(?:y|ies)|becomes?|is)\b",
+        r"\b(?:assign\w*|map\w*|mean\w*|set\w*|select\w*|suppl\w*|"
+            r"trigger\w*|impl(?:y|ies)\w*|becom\w*|rout\w*|escalat\w*|"
+            r"choose\w*|determin\w*|designat\w*|force\w*|config\w*|"
+            r"enable\w*|activate\w*|pick\w*|is)\b",
         re.I,
     )
     negative_relation = re.compile(
@@ -287,11 +297,38 @@ def check_axis_collision(source: str, label: str = "status-bearing source") -> N
     )
     for match in level_to_axis.finditer(normalized):
         relation = match.group("relation")
+        statement_end = re.search(r"[.!?;]", normalized[match.start():])
+        statement = normalized[
+            match.start(): match.start() + statement_end.end()
+            if statement_end else len(normalized)
+        ]
         if (
             mapping_verb.search(relation)
             and not negative_relation.search(relation)
+            and "explicit authorized project policy" not in statement.lower()
         ):
             fail(f"{label} contains a direct Ponytail-to-Holytail axis mapping")
+
+    mixed_clause = re.compile(
+        r"`?(?:lite|full|ultra|off)`?\b"
+        r"(?P<first>[^.!?;]{0,220}?)"
+        r"`?(?:FULL|ECO|INLINE|FORMAL)`?\b"
+        r"(?P<later>[^.!?;]{0,220}?)"
+        r"`?(?:FULL|ECO|INLINE|FORMAL)`?\b"
+    )
+    for match in mixed_clause.finditer(normalized):
+        first = match.group("first")
+        later = match.group("later")
+        if (
+            negative_relation.search(first)
+            and mapping_verb.search(first)
+            and re.search(r"\b(?:and|but)\b", later, re.I)
+            and mapping_verb.search(later)
+            and not negative_relation.search(later)
+            and "explicit authorized project policy"
+            not in normalized[match.start():match.end()].lower()
+        ):
+            fail(f"{label} contains a mixed Ponytail-to-Holytail axis mapping")
 
 
 def validate_status_contracts() -> None:

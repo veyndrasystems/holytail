@@ -23,6 +23,8 @@ validate = Validator()
 for path_fixture in (
     "/" + "home/" + "account/artifact",
     "/" + "Users/" + "account/artifact",
+    "/" + "root/" + "account/artifact",
+    "/var/" + "root/" + "artifact",
     "C:" + "\\" + "Users" + "\\" + "account" + "\\" + "artifact",
 ):
     try:
@@ -89,7 +91,13 @@ for pin_fixture in pin_fixtures:
 validate.assert_no_third_party_version_pins("unversioned dotagents and Codex references")
 validate.assert_no_third_party_version_pins("Codex >= " + neutral_version)
 
-for contradiction in ("`full` assigns `FULL`.", "`ultra` triggers `FORMAL`."):
+for contradiction in (
+    "`full` assigns `FULL`.",
+    "`ultra` triggers `FORMAL`.",
+    "`full` never maps to `ECO` but assigns `FULL`.",
+    "`ultra` does not assign `FULL` but routes to `FORMAL`.",
+    "`full` is unrelated to `ECO` and sets `FULL`.",
+):
     axis_mutated = valid + "\n" + contradiction + "\n"
     try:
         validate.check_axis_collision(axis_mutated, "mutated axis fixture")
@@ -97,6 +105,14 @@ for contradiction in ("`full` assigns `FULL`.", "`ultra` triggers `FORMAL`."):
         pass
     else:
         raise AssertionError(f"axis mutation was not rejected: {contradiction}")
+
+for contradiction in ("ultra routes to FORMAL", "ultra escalates to FORMAL"):
+    try:
+        validate.check_axis_collision(valid + "\n" + contradiction + "\n", "route bypass fixture")
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError(f"ultra route mutation was not rejected: {contradiction}")
 
 for verb in ("assigns", "maps to", "means", "sets", "selects", "supplies", "supply", "triggers", "implies", "imply", "becomes", "is"):
     contradiction = f"`full` {verb} `FULL`."
@@ -108,7 +124,33 @@ for verb in ("assigns", "maps to", "means", "sets", "selects", "supplies", "supp
         raise AssertionError(f"axis mutation was not rejected: {contradiction}")
 
 validate.check_axis_collision(valid + "\n`full` is not `FULL`.\n", "negative control")
+validate.check_axis_collision(valid + "\nultra does not route to FORMAL.\n", "negative control")
+validate.check_axis_collision(valid + "\nultra escalates to FORMAL only under an explicit authorized project policy.\n", "policy control")
 validate.check_axis_collision(valid + "\nOnly an explicit authorized project policy may define a mapping.\n", "policy control")
+
+for routing_fixture in (
+    "Requests are routed to the service.",
+    "Public product traffic is routed to a supported endpoint.",
+):
+    validate.assert_no_internal_routing_notes(routing_fixture, "product-routing negative control")
+
+try:
+    validate.assert_no_internal_routing_notes(
+        "Requests are routed to the model for execution.", "passive routing fixture"
+    )
+except AssertionError:
+    pass
+else:
+    raise AssertionError("passive routing mutation was not rejected")
+
+try:
+    validate.assert_no_internal_routing_notes(
+        "Requests are routed to a worker for execution.", "passive routing fixture"
+    )
+except AssertionError:
+    pass
+else:
+    raise AssertionError("passive routing mutation was not rejected")
 
 for contradiction in (
     "`full`\nassigns `FULL`.",
