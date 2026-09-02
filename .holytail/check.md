@@ -8,15 +8,11 @@ acceptance, or objective truth.
 - Accepted artifact: `.holytail/accepted.md`
 - Contract ID: `holytail-ponytail-layer-v1`
 - Contract SHA-256: `672d29feb8245767b4ca87b89dad5a0c530931364a79c201672d9797f0de2149`
-- Implementation base revision: `1fc8b4b4102e7754965d720615b17410372ae63c`
+- Implementation base revision: `7c437f2cada0fa2dd5ac775e0f6183666577e1ef`
 - Implementation snapshot: reproducible working-tree diff from the base,
-  excluding this check artifact
-- Implementation diff SHA-256: `cec7cdfaee3b12fec9da6cdd37387987eb47d49c7f0015c3d3205211e363e965`
-- Digest scope: base diff for `scripts/validate.py` and
-  `tests/test_validate.py`, plus current content hashes for
-  `publication-privacy-guard/SKILL.md` and
-  `publication-privacy-guard/scripts/check-tracked-snapshot`; this artifact
-  and the accepted artifact are excluded
+  excluding this check artifact and the accepted artifact
+- Implementation diff SHA-256: `4308b945cc7b4eeb7890ed9893080558e1cf372a9db48b184084f42c5e4c70bb`
+- Digest formula: `git diff --binary 7c437f2cada0fa2dd5ac775e0f6183666577e1ef -- . ':(exclude).holytail/accepted.md' ':(exclude).holytail/check.md' | sha256sum`
 
 ## Invariant-level findings
 
@@ -35,13 +31,13 @@ acceptance, or objective truth.
 | I11 | No competing Soulmate run format is introduced. | Source inspection |
 | I12 | No third-party plugin state is mutated. | Repository diff scope |
 | I13 | Hook order does not imply authority or precedence. | Status-contract checks |
-| I14 | Hook and agent assertions are not reported as independent verification. | Evidence wording checks |
+| I14 | Hook and status assertions are not reported as independent verification. | Evidence wording checks |
 | I15 | No measured preservation claim is added without reproducible results. | README and benchmark checks |
-| I16 | Tracked public artifacts contain no local home paths, private identifiers, or restricted workflow notes. | Validator mutation checks and publication guard |
+| I16 | Tracked public artifacts contain no local home paths, private identifiers, or restricted workflow notes. | Repository validator mutation checks and pre-publication scan |
 
 ## Evidence limits and semantic remainder
 
 The checks cover the authored snapshot and focused negative mutations. They do
-not establish real-session trust, model behavior, semantic preservation, or
+not establish real-session trust, runtime behavior, semantic preservation, or
 independent review. Publishable benchmark results and release publication
 remain outside this implementation snapshot and require maintainer action.
