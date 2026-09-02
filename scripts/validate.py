@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "plugins" / "holytail"
 SKILL = PLUGIN / "skills" / "holytail"
 CATALOG = ROOT / ".agents" / "plugins" / "marketplace.json"
-EXPECTED_DEPLOYMENT_REF = "2cf73934ec81a0af1b34593ca52a6bc31f7dde97"
+EXPECTED_DEPLOYMENT_REF = "a3dd3e37e27d28e7c3585150c5998fc3aa410e9d"
 EXPECTED_AUTHOR = {
     "name": "Veyndra Systems",
     "email": "veyndra-operator@users.noreply.github.com",
