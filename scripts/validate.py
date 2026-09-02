@@ -110,8 +110,8 @@ def validate_manifests() -> None:
     if {name: subagents.get(name, {}).get("path") for name in expected_paths} != expected_paths:
         fail("agents.toml subagent paths do not match authored sources")
     declarations = [*plugins, *deployment.get("subagents", [])]
-    if any(item.get("ref") != "main" for item in declarations):
-        fail("initial package commit declarations must use the main revision")
+    if any(item.get("ref") != "9f9c9cc37c6b2c678733bc7296b59724bc1de390" for item in declarations):
+        fail("all deployment declarations must pin the packaged source commit")
 
 
 def validate_skill() -> None:

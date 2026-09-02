@@ -8,20 +8,20 @@ agents = ["claude", "codex"]
 [[plugins]]
 name = "holytail"
 source = "git@github.com:veyndrasystems/holytail.git"
-ref = "main"
+ref = "9f9c9cc37c6b2c678733bc7296b59724bc1de390"
 path = "plugins/holytail"
 targets = ["claude", "codex"]
 
 [[subagents]]
 name = "holytail"
 source = "git@github.com:veyndrasystems/holytail.git"
-ref = "main"
+ref = "9f9c9cc37c6b2c678733bc7296b59724bc1de390"
 path = "agents/holytail.md"
 targets = ["claude", "codex"]
 
 [[subagents]]
 name = "semanticreviewer"
 source = "git@github.com:veyndrasystems/holytail.git"
-ref = "main"
+ref = "9f9c9cc37c6b2c678733bc7296b59724bc1de390"
 path = "agents/semanticreviewer.toml"
 targets = ["claude", "codex"]
