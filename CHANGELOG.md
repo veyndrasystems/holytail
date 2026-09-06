@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.0] - 2026-09-06
 
 ### Changed
 
@@ -8,6 +8,16 @@
 - Added standalone `.holytail/accepted.md` and post-check evidence, native Codex
   repo-marketplace packaging, lifecycle guidance, and an honest benchmark
   scaffold.
+
+### Fixed
+
+- Keep implementation minimization scoped to implementation subagents while
+  preserving Holytail's meaning and evidence boundary.
+- Allow proportionate inline checks for clear low-risk work and assign the
+  standalone post-check to the lead.
+- Pin consumer deployment entries to the released commit.
+
+## [Unreleased]
 
 ### Troubleshooting
 
