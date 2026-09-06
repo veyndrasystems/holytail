@@ -1,7 +1,10 @@
 # Holytail delivery
 
 Use this structure for the formal worker. It is implementation evidence, not
-reviewer approval, lead acceptance, or objective truth.
+reviewer approval, lead acceptance, or objective truth. The worker writes only
+its uniquely scoped delivery at the assigned destination. The lead alone writes
+`.holytail/check.md` for standalone formal work; workers do not write that check
+or record final acceptance.
 
 ## Immutable inputs and output
 

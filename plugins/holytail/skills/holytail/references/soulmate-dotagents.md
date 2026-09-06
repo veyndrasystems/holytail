@@ -2,8 +2,9 @@
 
 Holytail's authored content, dotagents deployment, and Soulmate authority are
 separate planes. Normal Codex sessions must still work without Soulmate. The
-user's active minimizer remains active; Holytail brackets it with an accepted
-read and a post-implementation check.
+minimizer, when enabled in the implementation context, operates between the
+accepted-meaning check and the post-implementation check. Installation or a
+routing hook does not establish minimizer activation.
 
 ## 1. Deploy with dotagents
 

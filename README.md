@@ -8,7 +8,8 @@ that it did not drop something you already agreed to.
 Before implementation, Holytail makes the accepted behavior reviewable. After
 implementation, it produces evidence that reads the result back against that
 same meaning. Holytail performs no minimization and does not replace, configure,
-or disable the active minimizer.
+or disable a minimizer. Activation follows the configured scope: a parent may
+remain unminimized while implementation subagents use Ponytail.
 
 ## Install in Codex
 
@@ -35,20 +36,27 @@ not prove activation, runtime enforcement, semantic compliance, or preservation.
 
 ## Choose the authority before first use
 
-Choose one path before copying a prompt:
+Clear low-risk work uses `INLINE`, with a brief meaning check and proportionate
+evidence in the ordinary response. Already-authorized reversible operations
+are not formal merely because they have an external effect. `FULL` quality
+alone does not select a route or require files, delegation, or a reviewer.
+
+For `FORMAL` work, choose one path before copying a prompt:
 
 - **Standalone project:** the operator or authorized lead writes
-  `.holytail/accepted.md` before implementation. Holytail rereads it afterward
-  and writes `.holytail/check.md` against the implementation snapshot.
+  `.holytail/accepted.md` before implementation. The lead alone writes
+  `.holytail/check.md` after rereading it against the implementation snapshot.
+  The worker writes only its uniquely scoped delivery.
 - **Existing Soulmate project:** use its current assignment, boundary, evidence,
   and acceptance workflow. Soulmate remains authority, evidence owner, and final
   acceptor; do not initialize it or create parallel `.holytail` run state.
 
-For a standalone first use, replace the example with behavior you actually
+For a standalone formal use, replace the example with behavior you actually
 accept for your task:
 
 ```text
-Use $holytail:holytail around the active minimizer for this implementation.
+Use $holytail:holytail with the FORMAL route. Quality mode: FULL.
+Preserve accepted meaning around any enabled implementation minimizer.
 This is a standalone project; do not initialize Soulmate.
 
 Operator-authored accepted behavior: When configuration validation fails,
@@ -56,8 +64,9 @@ report every invalid key and retain the original error context.
 
 Before editing, freeze that behavior in .holytail/accepted.md with its owner,
 invariants, boundary, and unknowns. After editing, reread the same artifact and
-write .holytail/check.md against the implementation snapshot, with a finding
-and evidence for each invariant. Do not invent acceptance.
+have the lead write .holytail/check.md against the implementation snapshot,
+with a finding and evidence for each invariant. The worker supplies its bounded
+delivery only. Do not invent acceptance.
 ```
 
 The recognizable before/after pair is:
@@ -88,8 +97,8 @@ instructions are not runtime enforcement, and hook order is not authority.
 
 ## Keep the axes separate
 
-Keep Ponytail active. Ponytail `lite`, `full`, `ultra`, and `off` control the
-minimizer. Holytail `FULL`/`ECO` describe quality and cost, while
+Honor the configured minimizer scope. Ponytail `lite`, `full`, `ultra`, and
+`off` control the minimizer. Holytail `FULL`/`ECO` describe quality and cost, while
 `INLINE`/`FORMAL` describe the route. `full` is not `FULL`; `ultra` is not a
 Holytail signal. A Holytail axis or escalation is never assigned by a Ponytail setting.
 Only an explicit authorized project policy may define a mapping. Without an

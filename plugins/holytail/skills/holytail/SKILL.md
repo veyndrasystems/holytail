@@ -1,12 +1,13 @@
 ---
 name: holytail
-description: Check accepted behavior around an already-active implementation minimizer. Use when code or configuration is about to be changed, when an implementation follows product or architecture exploration, or when a shortcut could collapse authority, lifecycle, evidence, security, persistence, compatibility, or decision-ownership distinctions. Keep clear low-risk work inline; escalate deterministically to an immutable semantic contract, bounded worker, and optional fresh semantic review. Do not use to close open exploration.
+description: Preserve accepted meaning before and after implementation, including around a scoped implementation minimizer. Use when code or configuration is about to be changed, when an implementation follows product or architecture exploration, or when a shortcut could collapse authority, lifecycle, evidence, security, persistence, compatibility, or decision-ownership distinctions. Keep clear low-risk work inline; escalate deterministically to an immutable semantic contract, bounded worker, and optional fresh semantic review. Do not use to close open exploration.
 ---
 
 # Holytail
 
-Holytail freezes task-specific accepted meaning before the user's already-active
-minimizer runs, then checks the resulting implementation against that meaning.
+Holytail preserves task-specific accepted meaning before implementation, then
+checks the result against that meaning. A minimizer, when enabled in the current
+implementation context, owns implementation economy inside that boundary.
 Holytail performs no minimization and does not replace, configure, or disable a
 third-party minimizer.
 
@@ -43,7 +44,10 @@ exploration. If explicitly invoked during exploration, use
 `Holytail :<FULL|ECO|MODE-UNBOUND> · EXPLORATION · evidence=agent_declared`
 and do not settle decisions.
 
-Ponytail is a compatible active minimizer. Ponytail `lite`, `full`, `ultra`, and
+Ponytail is a compatible minimizer; availability does not establish activation.
+Honor its configured scope, including an unminimized parent and independently
+enabled implementation subagents. Do not infer activation from a hook or an
+installation, and do not change mode state. Ponytail `lite`, `full`, `ultra`, and
 `off` settings and any Ponytail banner or intensity are unrelated to Holytail's
 `FULL`/`ECO` quality and `INLINE`/`FORMAL` route axes. `full` is not `FULL`,
 `ultra` is not a Holytail signal, and none of them assigns a mode or triggers
@@ -72,13 +76,17 @@ verify and reconcile even if the current request does not restate them.
 
 ## Standalone fallback workflow
 
-Without Soulmate, `.holytail/accepted.md` is the human-readable, diffable
-authority artifact supplied by the operator or authorized lead. Read it before
-the active minimizer operates. After implementation, read it back and write
-`.holytail/check.md` with the accepted artifact identity, implementation
-snapshot/diff identity, and invariant-level findings. A banner or bare pass is
-not a post-check. Keep both artifacts until an operator deliberately archives
-or deletes them.
+For standalone `FORMAL` work without Soulmate, `.holytail/accepted.md` is the
+human-readable, diffable authority artifact supplied by the operator or
+authorized lead. Read it before implementation. The lead alone writes
+`.holytail/check.md` after rereading the accepted artifact and implementation,
+with their immutable identities and invariant-level findings. The worker writes
+only its uniquely scoped delivery; it does not write the standalone check or
+record final acceptance. A banner or bare pass is not a post-check. Keep both
+artifacts until an operator deliberately archives or deletes them.
+
+`INLINE` needs no artifact files; retain the brief and proportionate evidence
+in the ordinary response unless the configured workflow requires otherwise.
 
 The fallback does not create Soulmate memory, ledger state, or a competing run
 schema. With Soulmate present, its assignment, boundary, evidence, and final
@@ -87,9 +95,9 @@ acceptance take precedence; Holytail contributes no second authority.
 ## Choose a route
 
 For clear low-risk work, use `INLINE` while preserving the accepted meaning.
-For persisted, public, authority, lifecycle, evidence, trust-boundary,
-irreversible, or first implementation after meaning-rich exploration, use
-`FORMAL` with the frozen contract and bounded worker. In either route:
+Already-authorized reversible operations are not formal merely because they
+have an external effect. Use the risk triggers below for `FORMAL`; a task's
+subject area alone does not escalate it. In either route:
 
 1. Derive a one-sentence brief or a few internal bullets from the current
    request, applicable instructions, and verified existing contracts.
@@ -99,8 +107,9 @@ irreversible, or first implementation after meaning-rich exploration, use
    keeping every accepted distinction observable.
 5. Verify protected behavior in proportion to risk and hand off normally.
 
-Do not require a contract file, separate worker, repeated acceptance, or
-reviewer merely because code changes. Do not hide meaningful deferral.
+`FULL` quality alone does not select a route. Code changes and quality labels
+do not by themselves require `FORMAL`, a contract file, a separate worker,
+repeated acceptance, or a reviewer. Do not hide meaningful deferral.
 
 ## Escalate deterministically
 
@@ -109,13 +118,15 @@ for it, or any of these conditions applies:
 
 - persisted schema, migration, public API, or backward-compatibility change
 - authentication, authority, permission, memory-right, or trust-boundary change
-- deletion, publication, external side effect, or other irreversible action
+- destructive or irreversible effects, including irreversible deletion or
+  publication; new or changed authority remains a trigger even if reversible
 - lifecycle states, role identities, evidence strengths, or known/unknown
   states might collapse
 - raw evidence would be replaced by a summary without traceability
 - distinct contexts or identities might be merged into a global representation
 - the first implementation after meaning-rich product or architecture
-  exploration
+  exploration whose protected meaning remains unresolved; the authorized owner
+  must resolve blocking decisions before implementation
 - two equally faithful mechanisms close different accepted or future options
 
 A configured Soulmate workflow overrides this heuristic; do not skip a mandated
@@ -130,7 +141,8 @@ worker or reviewer stage because the change appears small.
    relevant source and tests, permitted effects, and non-goals. Do not give it
    authority to reinterpret the exploratory transcript.
 3. Require [references/delivery.md](references/delivery.md). Bind delivery to
-   the contract digest and implementation commit, tree, or diff digest.
+   the contract digest and implementation commit, tree, or diff digest. Give
+   each worker a unique delivery destination; the lead owns the standalone check.
 4. When independent review can change acceptance, start a fresh
    `semanticreviewer` from the frozen contract and artifact, not from the
    worker's framing. Use [references/review.md](references/review.md).

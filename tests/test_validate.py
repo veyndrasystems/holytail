@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused negative check for the Ponytail/Holytail axis boundary."""
+"""Focused negative checks for Holytail guidance and authoring boundaries."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ class Validator:
     assert_no_third_party_version_pins = staticmethod(validate_namespace["assert_no_third_party_version_pins"])
     assert_no_machine_local_home_paths = staticmethod(validate_namespace["assert_no_machine_local_home_paths"])
     assert_no_internal_routing_notes = staticmethod(validate_namespace["assert_no_internal_routing_notes"])
+    check_guidance_boundaries = staticmethod(validate_namespace["check_guidance_boundaries"])
 
 validate = Validator()
 
@@ -52,6 +53,53 @@ validate.assert_no_internal_routing_notes("Public workflow evidence remains prod
 
 valid = (ROOT / "plugins/holytail/skills/holytail/references/routing-context.md").read_text()
 validate.check_axis_collision(valid, "fixture")
+validate.check_guidance_boundaries(valid, "routing fixture", inline=True, writer=True)
+
+for regression in (
+    "Ponytail remains active and is bracketed by this workflow.",
+    "Keep Ponytail active and unchanged.",
+    "The user's active minimizer remains active.",
+    "Before the user's already-active minimizer runs.",
+    "Escalate for deletion, publication, external side effect, or other irreversible action.",
+    "Escalate for deletion or external/irreversible effects.",
+    "An external effect alone requires FORMAL.",
+    "Escalate for all external effects.",
+    "Use FORMAL for external side effects.",
+    "FULL quality alone requires FORMAL.",
+    "The worker writes `.holytail/check.md` after implementation.",
+    "The worker also updates `.holytail/check.md`.",
+    "The standalone fallback reads `.holytail/accepted.md` before the user's active minimizer and writes `.holytail/check.md` afterward.",
+):
+    try:
+        validate.check_guidance_boundaries(valid + "\n" + regression, "regressed guidance")
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError(f"guidance regression was not rejected: {regression}")
+
+for phrase in (
+    "Already-authorized reversible operations are not formal merely because they have an external effect",
+    "`FULL` quality alone does not select a route",
+    "lead alone writes `.holytail/check.md`",
+    "worker writes only its uniquely scoped delivery",
+):
+    mutated = " ".join(valid.split()).replace(phrase, "")
+    try:
+        validate.check_guidance_boundaries(mutated, "missing boundary", inline=True, writer=True)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError(f"missing guidance boundary was not rejected: {phrase}")
+
+for control in (
+    "An external effect does not alone require FORMAL.",
+    "The parent remains unminimized; implementation subagents can use Ponytail.",
+    "A minimizer runs only where enabled by the configured scope.",
+    "FULL quality alone does not force a formal route.",
+    "The worker does not write `.holytail/check.md`.",
+    "Use FORMAL for new authority, destructive effects, or persisted schema changes.",
+):
+    validate.check_guidance_boundaries(valid + "\n" + control, "guidance control", inline=True, writer=True)
 
 validate.assert_no_economy_directives(valid, "fixture")
 economy_mutated = valid + "\n## Minimal implementation\n"

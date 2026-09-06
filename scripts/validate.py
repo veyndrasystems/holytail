@@ -401,6 +401,60 @@ def validate_status_contracts() -> None:
         fail("README must use the installed $holytail:holytail skill name")
 
 
+def check_guidance_boundaries(
+    source: str, label: str, *, inline: bool = False, writer: bool = False,
+) -> None:
+    """Pin known routing/ownership regressions; this is prose lint, not model proof."""
+    normalized = " ".join(source.split())
+    required = []
+    if inline:
+        required.extend((
+            "Already-authorized reversible operations are not formal merely because they have an external effect",
+            "`FULL` quality alone does not select a route",
+        ))
+    if writer:
+        required.extend((
+            "lead alone writes `.holytail/check.md`",
+            "worker writes only its uniquely scoped delivery",
+        ))
+    for phrase in required:
+        if phrase not in normalized:
+            fail(f"{label} is missing routing/ownership boundary: {phrase}")
+
+    regressions = (
+        r"\b(?:keep Ponytail active|Ponytail (?:remains|stays|is always) active)\b",
+        r"\b(?:user's |parent's )?(?:already-active minimizer|minimizer remains active)\b",
+        r"\b(?:deletion, publication, external side effect|deletion or external/irreversible effects)\b",
+        r"\b(?:external (?:side )?effects?) (?:alone )?(?:requires?|triggers?|forces?) `?FORMAL\b",
+        r"\b(?:escalate|use `?FORMAL`?) for (?:any |all )?external (?:side )?effects?\b",
+        r"`?FULL`? quality (?:alone )?(?:requires?|triggers?|forces?) `?FORMAL\b",
+        r"\bworker (?:also )?(?:writes?|updates?|owns?) `?\.holytail/check\.md",
+        r"\bminimizer and writes `?\.holytail/check\.md",
+    )
+    for pattern in regressions:
+        if re.search(pattern, normalized, re.I):
+            fail(f"{label} contains a routing/ownership regression")
+
+
+def validate_guidance_boundaries() -> None:
+    inline_paths = {
+        ROOT / "README.md",
+        ROOT / "docs" / "concepts-and-evidence.md",
+        SKILL / "SKILL.md",
+        SKILL / "references" / "routing-context.md",
+    }
+    writer_paths = inline_paths | {
+        ROOT / "agents" / "holytail.md",
+        PLUGIN / "profiles" / "holytail.md",
+        SKILL / "references" / "delivery.md",
+    }
+    for path in writer_paths | {SKILL / "references" / "soulmate-dotagents.md"}:
+        check_guidance_boundaries(
+            path.read_text(encoding="utf-8"), str(path.relative_to(ROOT)),
+            inline=path in inline_paths, writer=path in writer_paths,
+        )
+
+
 def validate_workflow_artifacts() -> None:
     accepted = (ROOT / ".holytail" / "accepted.md").read_text(encoding="utf-8")
     check = (ROOT / ".holytail" / "check.md").read_text(encoding="utf-8")
@@ -587,6 +641,9 @@ def validate_hooks() -> None:
     context = specific.get("additionalContext", "")
     if "INLINE" not in context or "FORMAL" not in context or "Hook order is not authority" not in context:
         fail("SessionStart hook context is incomplete")
+    check_guidance_boundaries(context, "SessionStart output", inline=True, writer=True)
+    if len(context.split()) > 400:
+        fail("SessionStart routing exceeds the 400-word context budget; keep details in the skill")
 
     subagent = run_hook("SubagentStart")
     if subagent.returncode != 0 or subagent.stdout:
@@ -603,6 +660,7 @@ def main() -> int:
     validate_manifests()
     validate_skill()
     validate_status_contracts()
+    validate_guidance_boundaries()
     validate_workflow_artifacts()
     validate_authoring_boundaries()
     validate_reviewer()

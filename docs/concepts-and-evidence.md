@@ -1,15 +1,17 @@
 # Understand Holytail concepts and evidence
 
-Holytail is an implementation gate around an already-active minimizer. It
-freezes task-specific accepted meaning before implementation and checks the
+Holytail is an implementation gate around accepted meaning. It freezes
+task-specific accepted meaning before implementation and checks the
 result afterward. It does not make implementation smaller, decide product
 meaning, replace Ponytail, or grant itself authority.
 
 ## The two jobs stay separate
 
-The minimizer owns implementation economy. Ponytail is the reference minimizer
-and stays active. Holytail protects the distinctions already accepted for the
-task: behavior, roles, authority, lifecycle states, evidence strength,
+An enabled minimizer owns implementation economy inside the accepted boundary.
+Ponytail is the reference minimizer; its configured scope may enable only
+implementation subagents while the parent remains unminimized. Holytail protects
+the distinctions already accepted for the task: behavior, roles, authority,
+lifecycle states, evidence strength,
 known/unknown claims, compatibility, security, and persistence boundaries.
 
 Holytail has no economy ladder. If more than one implementation mechanism is
@@ -33,9 +35,14 @@ Holytail route is one of:
   separate contract document or worker.
 - `FORMAL`: an immutable semantic contract, bounded implementation worker,
   delivery evidence, and—when required—a fresh semantic review. Use it for
-  persisted or public contracts, trust and authority boundaries, irreversible
-  effects, lifecycle or evidence distinctions, meaning-rich first
-  implementations, or when a configured workflow requires it.
+  changes to persisted or public contracts, trust or authority boundaries,
+  destructive or irreversible effects, material lifecycle or evidence
+  distinctions at risk, first implementation after exploration with unresolved
+  protected meaning, or when a configured workflow requires it.
+
+`FULL` quality alone does not select a route or require files, delegation, or
+a reviewer. Already-authorized reversible operations are not formal merely
+because they have an external effect.
 
 These axes do not derive from Ponytail. Ponytail `lite`, `full`, `ultra`, and
 `off` are minimizer settings. `full` is not `FULL`; `ultra` is not a Holytail
@@ -51,14 +58,15 @@ repository document, test, transcript, generated summary, or previous run is
 evidence unless that owner explicitly accepts it. Holytail cannot infer
 acceptance, reconcile contradictory owners, promote memory, or widen a task.
 
-In a standalone project:
+In a standalone formal project (inline work needs no artifact files):
 
 1. Before implementation, read `.holytail/accepted.md`. It should identify the
    accepted increment, provenance, protected distinctions, invariants,
    implementation boundary, non-goals, decisions, and evidence expected.
-2. After implementation, reread that same artifact and write
-   `.holytail/check.md`. The check identifies both the accepted artifact and
-   implementation snapshot and reports invariant-level findings and unknowns.
+2. The lead alone writes `.holytail/check.md` after rereading that same
+   artifact and the implementation. The check identifies both immutable inputs
+   and reports invariant-level findings and unknowns. The worker writes only
+   its uniquely scoped delivery.
 3. Retain both artifacts until the operator deliberately archives or deletes
    them.
 
