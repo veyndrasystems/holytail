@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +13,7 @@ validate_namespace = {"__name__": "holytail_validate_fixture", "__file__": str(R
 exec(compile(validator_source, str(ROOT / "scripts" / "validate.py"), "exec"), validate_namespace)
 
 class Validator:
+    validate_markdown_links = staticmethod(validate_namespace["validate_markdown_links"])
     check_axis_collision = staticmethod(validate_namespace["check_axis_collision"])
     assert_no_economy_directives = staticmethod(validate_namespace["assert_no_economy_directives"])
     assert_no_third_party_version_pins = staticmethod(validate_namespace["assert_no_third_party_version_pins"])
@@ -20,6 +22,47 @@ class Validator:
     check_guidance_boundaries = staticmethod(validate_namespace["check_guidance_boundaries"])
 
 validate = Validator()
+
+with TemporaryDirectory() as directory:
+    fixture_root = Path(directory)
+    (fixture_root / "agents").mkdir()
+    (fixture_root / "plugins" / "holytail").mkdir(parents=True)
+    (fixture_root / "README.md").write_text("# fixture\n", encoding="utf-8")
+    (fixture_root / "agents" / "holytail.md").write_text("# fixture\n", encoding="utf-8")
+    (fixture_root / "docs" / "nested").mkdir(parents=True)
+    (fixture_root / "docs" / "target.md").write_text("# section\n", encoding="utf-8")
+    (fixture_root / "docs" / "guide.md").write_text(
+        "[valid](target.md#section)\n[missing](missing.md#section)\n"
+        "[same](#section)\n"
+        "[web](https://example.test/docs)\n",
+        encoding="utf-8",
+    )
+    (fixture_root / "docs" / "nested" / "guide.md").write_text(
+        "[missing](nested-missing.md)\n",
+        encoding="utf-8",
+    )
+    previous_root = validate_namespace["ROOT"]
+    previous_plugin = validate_namespace["PLUGIN"]
+    validate_namespace["ROOT"] = fixture_root
+    validate_namespace["PLUGIN"] = fixture_root / "plugins" / "holytail"
+    try:
+        try:
+            validate.validate_markdown_links()
+        except AssertionError as error:
+            message = str(error)
+            for target in (
+                "docs/guide.md -> missing.md#section",
+                "docs/nested/guide.md -> nested-missing.md",
+            ):
+                if target not in message:
+                    raise AssertionError(f"docs link failure omitted: {target}")
+            if "docs/guide.md -> target.md#section" in message:
+                raise AssertionError("valid relative target fragment was rejected")
+        else:
+            raise AssertionError("docs Markdown link mutation was not rejected")
+    finally:
+        validate_namespace["ROOT"] = previous_root
+        validate_namespace["PLUGIN"] = previous_plugin
 
 for path_fixture in (
     "/" + "home/" + "account/artifact",

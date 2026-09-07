@@ -588,6 +588,7 @@ def validate_reviewer() -> None:
 
 def validate_markdown_links() -> None:
     markdown_files = [ROOT / "README.md", ROOT / "agents" / "holytail.md"]
+    markdown_files.extend((ROOT / "docs").rglob("*.md"))
     markdown_files.extend(PLUGIN.rglob("*.md"))
     link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
     broken: list[str] = []

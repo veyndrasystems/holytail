@@ -139,9 +139,10 @@ projection plus local marketplace install/list/hook/remove behavior. It does
 not establish public remote installation, hook trust in an interactive session,
 runtime enforcement, or semantic preservation.
 
-Run a relative-link check that includes the README and `docs/*.md`, because the
-current validator's Markdown-link scope does not include these companion docs.
-Also run `git diff --check` and review the exact bounded diff.
+The validation command includes relative-file link checking for the README,
+`agents/holytail.md`, all `docs/**/*.md`, and plugin Markdown, so no separate
+docs-link check is required. Also run `git diff --check` and review the exact
+bounded diff.
 
 ## Prepare—but do not imply—a release
 
