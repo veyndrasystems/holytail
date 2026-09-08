@@ -749,6 +749,23 @@ def self_test() -> None:
         prepare(prepared, manifest)
         assert sorted(path.name for path in (prepared / "runs").iterdir()) == sorted(expected_ids)
         assert_no_leakage(prepared, manifest)
+        early_exit_task = "__self_test_early_exit__"
+        oracles.ORACLES[early_exit_task] = (
+            ("EARLY", "raise SystemExit(0)"),
+            ("NOISY", "print('unexpected candidate output')"),
+        )
+        try:
+            early_exit_workspace = Path(temporary) / "early-exit"
+            early_exit_workspace.mkdir()
+            early_exit_result = oracles.run_oracle(early_exit_task, early_exit_workspace)
+            assert early_exit_result == {
+                "status": "fail",
+                "preserved_invariants": [],
+                "lost_invariants": ["EARLY", "NOISY"],
+                "detail": "2 external hidden check(s) failed",
+            }
+        finally:
+            del oracles.ORACLES[early_exit_task]
         for task in manifest["tasks"]:
             for fixture_name, expected_oracle in (("reference", "pass"), ("mutant", "fail")):
                 workspace = Path(temporary) / f"{task['id']}-{fixture_name}"

@@ -15,8 +15,11 @@ lifecycle states, evidence strength,
 known/unknown claims, compatibility, security, and persistence boundaries.
 
 Holytail has no economy ladder. If more than one implementation mechanism is
-faithful but the choices close different accepted or future options, the formal
-worker stops as `blocked`; it does not select product meaning.
+faithful but the choices close different accepted or explicitly protected
+options, or an irreversible choice falls outside assignment authority, the
+formal worker stops as `blocked`; it does not select product meaning.
+Reversible mechanism choices that do not close an accepted or explicitly
+protected option remain within worker authority.
 
 ## Quality and route are independent axes
 

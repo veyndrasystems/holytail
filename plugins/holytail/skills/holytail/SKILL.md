@@ -127,7 +127,10 @@ for it, or any of these conditions applies:
 - the first implementation after meaning-rich product or architecture
   exploration whose protected meaning remains unresolved; the authorized owner
   must resolve blocking decisions before implementation
-- two equally faithful mechanisms close different accepted or future options
+- two equally faithful mechanisms close different accepted or explicitly
+  protected options, or an irreversible choice falls outside assignment
+  authority; reversible mechanism choices that do not close an accepted or
+  explicitly protected option remain within worker authority
 
 A configured Soulmate workflow overrides this heuristic; do not skip a mandated
 worker or reviewer stage because the change appears small.

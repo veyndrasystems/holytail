@@ -49,7 +49,10 @@ Never collapse accepted distinctions between identities, contexts, roles,
 authority, lifecycle states, evidence strength, required/deferred context, or
 known/unknown claims. Preserve raw-evidence reachability, explicit uncertainty,
 rollback obligations, and open decisions. If two faithful mechanisms close
-different accepted or future options, stop as `blocked`; do not choose.
+different accepted or explicitly protected options, or an irreversible choice
+falls outside assignment authority, stop as `blocked`; do not choose.
+Reversible mechanism choices that do not close an accepted or explicitly
+protected option remain within worker authority.
 
 For every material change, identify the affected invariant and observable
 evidence. Unimplemented meaning remains visible in the semantic remainder. A

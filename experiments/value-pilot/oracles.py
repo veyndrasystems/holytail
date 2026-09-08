@@ -66,6 +66,10 @@ def fingerprints() -> tuple[str, ...]:
     )
 
 
+def completion_marker(task_id: str, invariant_id: str) -> str:
+    return f"__HOLYTAIL_ORACLE_COMPLETE__:{task_id}:{invariant_id}"
+
+
 def run_oracle(task_id: str, workspace: Path) -> dict[str, object]:
     checks = ORACLES.get(task_id)
     if checks is None:
@@ -73,15 +77,18 @@ def run_oracle(task_id: str, workspace: Path) -> dict[str, object]:
     preserved: list[str] = []
     lost: list[str] = []
     for invariant_id, source in checks:
+        marker = completion_marker(task_id, invariant_id)
+        guarded_source = f"{source}\nprint({marker!r})\n"
         completed = subprocess.run(
-            [sys.executable, "-I", "-c", source, str(workspace.resolve())],
+            [sys.executable, "-I", "-c", guarded_source, str(workspace.resolve())],
             cwd=workspace,
             text=True,
             capture_output=True,
             timeout=10,
             check=False,
         )
-        (preserved if completed.returncode == 0 else lost).append(invariant_id)
+        passed = completed.returncode == 0 and completed.stdout == f"{marker}\n"
+        (preserved if passed else lost).append(invariant_id)
     return {
         "status": "pass" if not lost else "fail",
         "preserved_invariants": preserved,

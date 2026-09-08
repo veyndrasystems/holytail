@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
@@ -436,6 +437,19 @@ def check_guidance_boundaries(
             fail(f"{label} contains a routing/ownership regression")
 
 
+def check_worker_blocking_boundary(source: str, label: str) -> None:
+    normalized = " ".join(source.split()).lower()
+    for phrase in (
+        "accepted or explicitly protected options",
+        "irreversible choice falls outside assignment authority",
+        "reversible mechanism choices that do not close an accepted or explicitly protected option remain within worker authority",
+    ):
+        if phrase not in normalized:
+            fail(f"{label} is missing worker blocking boundary: {phrase}")
+    if "future options" in normalized:
+        fail(f"{label} retains hypothetical future-option blocking")
+
+
 def validate_guidance_boundaries() -> None:
     inline_paths = {
         ROOT / "README.md",
@@ -453,6 +467,127 @@ def validate_guidance_boundaries() -> None:
             path.read_text(encoding="utf-8"), str(path.relative_to(ROOT)),
             inline=path in inline_paths, writer=path in writer_paths,
         )
+    for path in (
+        ROOT / "agents" / "holytail.md",
+        PLUGIN / "profiles" / "holytail.md",
+        SKILL / "SKILL.md",
+        ROOT / "docs" / "concepts-and-evidence.md",
+    ):
+        check_worker_blocking_boundary(path.read_text(encoding="utf-8"), str(path.relative_to(ROOT)))
+
+
+def _single_binding(source: str, pattern: str, label: str) -> str:
+    matches = re.findall(pattern, source, flags=re.MULTILINE)
+    if len(matches) != 1:
+        fail(f"workflow artifact is stale: {label} binding must appear exactly once")
+    return matches[0]
+
+
+def _reachable_evidence(evidence: str, repo_root: Path) -> None:
+    references = re.findall(r"`([^`]+)`", evidence)
+    if not references:
+        fail("workflow artifact is stale: invariant evidence has no repo-relative path")
+    root = repo_root.resolve()
+    for reference in references:
+        relative = PurePosixPath(reference)
+        if (
+            not reference
+            or "\\" in reference
+            or relative.is_absolute()
+            or ".." in relative.parts
+        ):
+            fail("workflow artifact is stale: invariant evidence path is malformed")
+        target = (root / relative).resolve()
+        try:
+            target.relative_to(root)
+        except ValueError:
+            fail("workflow artifact is stale: invariant evidence path is unreachable")
+        if not target.is_file():
+            fail("workflow artifact is stale: invariant evidence path is unreachable")
+
+
+def _invariant_ids(accepted: str, check: str, repo_root: Path) -> tuple[list[str], list[str]]:
+    accepted_ids = re.findall(r"^-\s+(I\d+):\s+\S", accepted, flags=re.MULTILINE)
+    if not accepted_ids or len(accepted_ids) != len(set(accepted_ids)):
+        fail("workflow artifact is stale: accepted invariant set is malformed or duplicated")
+
+    section = re.search(
+        r"^## Invariant-level findings\s*$\n(?P<table>.*?)(?=^## |\Z)",
+        check,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if not section:
+        fail("workflow artifact is stale: invariant findings table is missing")
+    rows: list[str] = []
+    header_seen = False
+    for line in section.group("table").splitlines():
+        if not line.strip().startswith("|"):
+            continue
+        columns = [column.strip() for column in line.strip().strip("|").split("|")]
+        if columns == ["Invariant", "Finding", "Evidence"]:
+            if header_seen:
+                fail("workflow artifact is stale: invariant table header is duplicated")
+            header_seen = True
+            continue
+        if len(columns) == 3 and all(set(column) <= {"-", ":"} for column in columns):
+            continue
+        if len(columns) != 3 or not re.fullmatch(r"I\d+", columns[0]) or not columns[1] or not columns[2]:
+            fail("workflow artifact is stale: invariant binding row is malformed")
+        _reachable_evidence(columns[2], repo_root)
+        rows.append(columns[0])
+    if not header_seen or not rows or len(rows) != len(set(rows)):
+        fail("workflow artifact is stale: invariant bindings are missing or duplicated")
+    return accepted_ids, rows
+
+
+def validate_snapshot_bindings(
+    accepted: str,
+    check: str,
+    actual_diff_sha256: str,
+    *,
+    base_revision_exists: bool,
+    repo_root: Path = ROOT,
+) -> None:
+    """Validate mechanical post-check bindings; this proves no semantic truth."""
+    accepted_contract_id = _single_binding(
+        accepted, r"^-\s+Contract ID:\s+`?([^`\n]+)`?\s*$", "accepted Contract ID"
+    )
+    check_contract_id = _single_binding(
+        check, r"^-\s+Contract ID:\s+`?([^`\n]+)`?\s*$", "check Contract ID"
+    )
+    if check_contract_id != accepted_contract_id:
+        fail("workflow artifact is stale: Contract ID does not match accepted artifact")
+
+    declared_contract_sha256 = _single_binding(
+        check, r"^-\s+Contract SHA-256:\s*`?([0-9a-f]{64})`?\s*$", "contract SHA-256"
+    )
+    actual_contract_sha256 = sha256(accepted.encode("utf-8")).hexdigest()
+    if declared_contract_sha256 != actual_contract_sha256:
+        fail("workflow artifact is stale: contract SHA-256 does not match accepted artifact")
+
+    base_revision = _single_binding(
+        check, r"^-\s+Implementation base revision:\s*`?([0-9a-f]{40})`?\s*$", "implementation base revision"
+    )
+    if not base_revision_exists:
+        fail("workflow artifact is stale: implementation base revision is unavailable")
+    declared_formula = _single_binding(
+        check, r"^-\s+Digest formula:\s*`?(.+?)`?\s*$", "digest formula"
+    )
+    expected_formula = (
+        f"git diff --binary {base_revision} -- . "
+        "':(exclude).holytail/accepted.md' ':(exclude).holytail/check.md' | sha256sum"
+    )
+    if declared_formula != expected_formula:
+        fail("workflow artifact is stale: digest formula is malformed")
+    declared_diff_sha256 = _single_binding(
+        check, r"^-\s+Implementation diff SHA-256:\s*`?([0-9a-f]{64})`?\s*$", "implementation diff SHA-256"
+    )
+    if declared_diff_sha256 != actual_diff_sha256:
+        fail("workflow artifact is stale: implementation diff SHA-256 does not match checkout")
+
+    accepted_ids, check_ids = _invariant_ids(accepted, check, repo_root)
+    if set(accepted_ids) != set(check_ids):
+        fail("workflow artifact is stale: accepted and checked invariant sets differ")
 
 
 def validate_workflow_artifacts() -> None:
@@ -467,9 +602,40 @@ def validate_workflow_artifacts() -> None:
         if phrase not in check:
             fail(f"post-check artifact missing: {phrase}")
 
-    benchmark = (ROOT / "scripts" / "benchmark.py").read_text(encoding="utf-8")
+    base_revision = _single_binding(
+        check, r"^-\s+Implementation base revision:\s*`?([0-9a-f]{40})`?\s*$", "implementation base revision"
+    )
+    base_check = subprocess.run(
+        ["git", "cat-file", "-e", f"{base_revision}^{{commit}}"],
+        cwd=ROOT,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    diff = subprocess.run(
+        [
+            "git", "diff", "--binary", base_revision, "--", ".",
+            ":(exclude).holytail/accepted.md",
+            ":(exclude).holytail/check.md",
+        ],
+        cwd=ROOT,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if diff.returncode:
+        fail("workflow artifact is stale: implementation diff could not be recomputed")
+    validate_snapshot_bindings(
+        accepted,
+        check,
+        sha256(diff.stdout).hexdigest(),
+        base_revision_exists=base_check.returncode == 0,
+        repo_root=ROOT,
+    )
+
+    benchmark_source = (ROOT / "scripts" / "benchmark.py").read_text(encoding="utf-8")
     for phrase in ("Arm A", "Arm B", "accepted_behaviors", "silent_drop", "status=not-run"):
-        if phrase not in benchmark and phrase.lower() not in benchmark.lower():
+        if phrase not in benchmark_source and phrase.lower() not in benchmark_source.lower():
             fail(f"benchmark scaffold missing: {phrase}")
 
 def assert_no_economy_directives(source: str, label: str = "authored source") -> None:
@@ -667,7 +833,7 @@ def main() -> int:
     validate_reviewer()
     validate_markdown_links()
     validate_hooks()
-    print("Holytail package validation: OK")
+    print("Holytail package validation: consistent (mechanical checks only)")
     return 0
 
 

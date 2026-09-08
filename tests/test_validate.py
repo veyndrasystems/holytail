@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from hashlib import sha256
+import re
 from tempfile import TemporaryDirectory
 
 
@@ -20,8 +22,80 @@ class Validator:
     assert_no_machine_local_home_paths = staticmethod(validate_namespace["assert_no_machine_local_home_paths"])
     assert_no_internal_routing_notes = staticmethod(validate_namespace["assert_no_internal_routing_notes"])
     check_guidance_boundaries = staticmethod(validate_namespace["check_guidance_boundaries"])
+    check_worker_blocking_boundary = staticmethod(validate_namespace["check_worker_blocking_boundary"])
+    validate_snapshot_bindings = staticmethod(validate_namespace["validate_snapshot_bindings"])
 
 validate = Validator()
+
+accepted_snapshot = (ROOT / ".holytail/accepted.md").read_text(encoding="utf-8")
+check_snapshot = (ROOT / ".holytail/check.md").read_text(encoding="utf-8")
+declared_diff = re.search(
+    r"^- Implementation diff SHA-256:\s*`?([0-9a-f]{64})`?$", check_snapshot, re.MULTILINE
+).group(1)
+valid_check_snapshot = check_snapshot.replace(
+    re.search(r"^- Contract SHA-256:\s*`?[0-9a-f]{64}`?$", check_snapshot, re.MULTILINE).group(0),
+    f"- Contract SHA-256: {sha256(accepted_snapshot.encode('utf-8')).hexdigest()}",
+)
+
+
+def reachable_evidence(text: str) -> str:
+    rows = []
+    for line in text.splitlines(keepends=True):
+        if re.match(r"^\|\s*I\d+\s*\|", line):
+            parts = line.rstrip("\n").split("|")
+            parts[3] = " `scripts/validate.py` "
+            line = "|".join(parts) + ("\n" if line.endswith("\n") else "")
+        rows.append(line)
+    return "".join(rows)
+
+
+valid_check_snapshot = reachable_evidence(valid_check_snapshot)
+validate.validate_snapshot_bindings(
+    accepted_snapshot,
+    valid_check_snapshot,
+    declared_diff,
+    base_revision_exists=True,
+    repo_root=ROOT,
+)
+
+invariant_row = next(line for line in valid_check_snapshot.splitlines(keepends=True) if line.startswith("| I1 |"))
+
+for mutation in (
+    lambda text: text.replace(
+        re.search(r"^- Contract SHA-256:\s*`?[0-9a-f]{64}`?$", text, re.MULTILINE).group(0),
+        "- Contract SHA-256: " + "0" * 64,
+    ),
+    lambda text: text.replace(
+        re.search(r"^- Implementation diff SHA-256:\s*`?[0-9a-f]{64}`?$", text, re.MULTILINE).group(0),
+        "- Implementation diff SHA-256: " + "0" * 64,
+    ),
+    lambda text: text.replace(
+        invariant_row,
+        "",
+    ),
+    lambda text: text.replace(
+        invariant_row,
+        invariant_row * 2,
+    ),
+    lambda text: text.replace(
+        "- Contract SHA-256: " + sha256(accepted_snapshot.encode("utf-8")).hexdigest(),
+        "- Contract SHA-256: malformed",
+    ),
+    lambda text: text.replace("`scripts/validate.py`", "missing.md", 1),
+    lambda text: text.replace("`scripts/validate.py`", "`/tmp/evidence.md`", 1),
+):
+    try:
+        validate.validate_snapshot_bindings(
+            accepted_snapshot,
+            mutation(valid_check_snapshot),
+            declared_diff,
+            base_revision_exists=True,
+            repo_root=ROOT,
+        )
+    except AssertionError as error:
+        assert "stale" in str(error)
+    else:
+        raise AssertionError("workflow snapshot mutation was not rejected")
 
 with TemporaryDirectory() as directory:
     fixture_root = Path(directory)
@@ -97,6 +171,24 @@ validate.assert_no_internal_routing_notes("Public workflow evidence remains prod
 valid = (ROOT / "plugins/holytail/skills/holytail/references/routing-context.md").read_text()
 validate.check_axis_collision(valid, "fixture")
 validate.check_guidance_boundaries(valid, "routing fixture", inline=True, writer=True)
+
+worker_guidance = (ROOT / "agents/holytail.md").read_text(encoding="utf-8")
+validate.check_worker_blocking_boundary(worker_guidance, "worker fixture")
+for old_wording, replacement in (
+    ("accepted or explicitly protected options", "accepted or future options"),
+    ("falls outside assignment authority", "falls within assignment authority"),
+    (
+        "Reversible mechanism choices that do not close an accepted or explicitly\nprotected option remain within worker authority",
+        "Reversible mechanism choices remain within worker authority",
+    ),
+):
+    regressed_worker = worker_guidance.replace(old_wording, replacement)
+    try:
+        validate.check_worker_blocking_boundary(regressed_worker, "regressed worker fixture")
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError(f"worker blocking mutation was not rejected: {old_wording}")
 
 for regression in (
     "Ponytail remains active and is bracketed by this workflow.",
