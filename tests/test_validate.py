@@ -23,9 +23,29 @@ class Validator:
     assert_no_internal_routing_notes = staticmethod(validate_namespace["assert_no_internal_routing_notes"])
     check_guidance_boundaries = staticmethod(validate_namespace["check_guidance_boundaries"])
     check_worker_blocking_boundary = staticmethod(validate_namespace["check_worker_blocking_boundary"])
+    validate_ci_checkout_history = staticmethod(validate_namespace["validate_ci_checkout_history"])
     validate_snapshot_bindings = staticmethod(validate_namespace["validate_snapshot_bindings"])
 
 validate = Validator()
+
+ci_workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+validate.validate_ci_checkout_history(ci_workflow)
+for mutation in (
+    lambda text: text.replace("        with:\n          fetch-depth: 0\n", "", 1),
+    lambda text: text.replace("          fetch-depth: 0", "          fetch-depth: 1", 1),
+    lambda text: text.replace(
+        "          fetch-depth: 0", "          fetch-depth: 0\n          fetch-depth: 1", 1
+    ),
+    lambda text: text.replace(
+        "          fetch-depth: 0", "          fetch-depth: 0\n          fetch-depth: 0", 1
+    ),
+):
+    try:
+        validate.validate_ci_checkout_history(mutation(ci_workflow))
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("CI checkout-history mutation was not rejected")
 
 accepted_snapshot = (ROOT / ".holytail/accepted.md").read_text(encoding="utf-8")
 check_snapshot = (ROOT / ".holytail/check.md").read_text(encoding="utf-8")

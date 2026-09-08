@@ -11,7 +11,7 @@ acceptance, or objective truth.
 - Implementation base revision: `7c437f2cada0fa2dd5ac775e0f6183666577e1ef`
 - Implementation snapshot: reproducible working-tree diff from the base,
   excluding this check artifact and the accepted artifact
-- Implementation diff SHA-256: `24af966ad4256b7633c4476749a591186fda3bc88da790e3592883bf71da2f2e`
+- Implementation diff SHA-256: `2dad4b425a7db00916c25ab1970d25283d13d01f3ac1f4e146c469860b30cd5c`
 - Digest formula: `git diff --binary 7c437f2cada0fa2dd5ac775e0f6183666577e1ef -- . ':(exclude).holytail/accepted.md' ':(exclude).holytail/check.md' | sha256sum`
 
 ## Invariant-level findings

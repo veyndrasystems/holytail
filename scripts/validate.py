@@ -638,6 +638,39 @@ def validate_workflow_artifacts() -> None:
         if phrase not in benchmark_source and phrase.lower() not in benchmark_source.lower():
             fail(f"benchmark scaffold missing: {phrase}")
 
+
+def validate_ci_checkout_history(source: str | None = None) -> None:
+    """Require the package validator's checkout to retain the full Git history."""
+    workflow = source if source is not None else (
+        ROOT / ".github" / "workflows" / "ci.yml"
+    ).read_text(encoding="utf-8")
+    package = re.search(
+        r"^  package:\s*\n(?P<body>.*?)(?=^  \S|\Z)",
+        workflow,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if not package:
+        fail("CI workflow is missing the package job")
+    checkout_steps = re.findall(
+        r"^      - uses:\s*actions/checkout@v4\s*\n(?P<body>.*?)(?=^      - |\Z)",
+        package.group("body"),
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if len(checkout_steps) != 1:
+        fail("CI package job must contain one actions/checkout@v4 step")
+    with_block = re.search(
+        r"^        with:\s*\n(?P<body>.*?)(?=^      - |\Z)",
+        checkout_steps[0],
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    fetch_depth_values = re.findall(
+        r"^          fetch-depth:[ \t]*([^#\s]+)[ \t]*(?:#.*)?$",
+        with_block.group("body") if with_block else "",
+        flags=re.MULTILINE,
+    )
+    if fetch_depth_values != ["0"]:
+        fail("CI package checkout must use fetch-depth: 0")
+
 def assert_no_economy_directives(source: str, label: str = "authored source") -> None:
     """Reject Holytail-owned economy directives while allowing active minimizer references."""
     patterns = (
@@ -828,6 +861,7 @@ def main() -> int:
     validate_skill()
     validate_status_contracts()
     validate_guidance_boundaries()
+    validate_ci_checkout_history()
     validate_workflow_artifacts()
     validate_authoring_boundaries()
     validate_reviewer()
