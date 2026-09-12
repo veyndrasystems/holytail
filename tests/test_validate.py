@@ -22,6 +22,8 @@ class Validator:
     assert_no_machine_local_home_paths = staticmethod(validate_namespace["assert_no_machine_local_home_paths"])
     assert_no_internal_routing_notes = staticmethod(validate_namespace["assert_no_internal_routing_notes"])
     check_guidance_boundaries = staticmethod(validate_namespace["check_guidance_boundaries"])
+    check_formal_packet_quality = staticmethod(validate_namespace["check_formal_packet_quality"])
+    check_routing_identity_trigger = staticmethod(validate_namespace["check_routing_identity_trigger"])
     check_worker_blocking_boundary = staticmethod(validate_namespace["check_worker_blocking_boundary"])
     validate_ci_checkout_history = staticmethod(validate_namespace["validate_ci_checkout_history"])
     validate_snapshot_bindings = staticmethod(validate_namespace["validate_snapshot_bindings"])
@@ -191,6 +193,40 @@ validate.assert_no_internal_routing_notes("Public workflow evidence remains prod
 valid = (ROOT / "plugins/holytail/skills/holytail/references/routing-context.md").read_text()
 validate.check_axis_collision(valid, "fixture")
 validate.check_guidance_boundaries(valid, "routing fixture", inline=True, writer=True)
+validate.check_routing_identity_trigger(valid, "routing fixture")
+identity_trigger = "material lifecycle/evidence/identity distinctions"
+try:
+    validate.check_routing_identity_trigger(
+        valid.replace(identity_trigger, "material lifecycle/evidence distinctions"),
+        "routing identity mutation",
+    )
+except AssertionError:
+    pass
+else:
+    raise AssertionError("routing identity trigger deletion was not rejected")
+
+validate.check_formal_packet_quality(
+    "Quality mode: FULL.\nImplement the frozen accepted increment only.",
+    "accepted packet",
+)
+for invalid_packet in (
+    "Implement the frozen accepted increment only.",
+    "Quality mode: FULL.\nQuality mode: FULL.",
+    "Quality mode: FULL.\nQuality mode: ECO.",
+    "Quality mode: FULL.\n- Quality mode: ECO.",
+    "Quality mode: FULL.\nQuality  mode: ECO.",
+    "Quality mode: FULL.\nQuality\tmode: ECO.",
+    "Holytail :FULL · FORMAL · evidence=agent_declared",
+    "Ponytail full",
+    "reasoningEffort=ultra",
+    "Quality mode: MODE-UNBOUND.",
+):
+    try:
+        validate.check_formal_packet_quality(invalid_packet, "invalid packet")
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError(f"formal packet mutation was not rejected: {invalid_packet}")
 
 worker_guidance = (ROOT / "agents/holytail.md").read_text(encoding="utf-8")
 validate.check_worker_blocking_boundary(worker_guidance, "worker fixture")

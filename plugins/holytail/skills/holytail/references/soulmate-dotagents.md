@@ -55,13 +55,17 @@ actually used; the string in a portable profile is not enforcement. When
 running a reviewer through `soulmate away start`, also pass
 `--sandbox-mode read-only`.
 
-The default and clearest assignment is for the lead to put `Quality mode: FULL`
-in every formal run goal; that direct assignment is sufficient. If the project
-instead wants a host/model/reasoning label to supply the mode automatically, its
-authorized policy must define the mapping explicitly—for example, Codex
-`reasoningEffort=ultra` to team quality mode `FULL`. An effort label alone does
-not authorize that inference. The resulting status line remains
-`agent_declared`, not proof of runtime enforcement.
+The lead selects the existing route first. Every formal run receives `FULL`
+automatically; inline work uses `FULL` when consequence or uncertainty is
+material and `ECO` otherwise. Do not ask the user solely for mode selection.
+Before a formal child is spawned, the packet must contain exactly one canonical
+line, `Quality mode: FULL.` Missing, duplicate, conflicting, parent-banner-only,
+minimizer-only, and reasoning-effort-only assignments fail before spawn. The
+child-side fail-closed check remains. Explicit project policies and owner
+decisions remain authoritative. A host/model/reasoning label can supply a mode
+only when that authorized policy defines the mapping explicitly—for example,
+Codex `reasoningEffort=ultra` to team quality mode `FULL`; an effort label alone
+does not authorize that inference.
 
 ## 3. Add workflows, not a new schema
 

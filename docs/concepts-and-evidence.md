@@ -28,8 +28,9 @@ Holytail quality is one of:
 - `FULL`: the quality mode required for a formal worker or semantic reviewer.
 - `ECO`: a separate quality/cost assignment where the applicable workflow
   permits it; it does not imply a route.
-- `MODE-UNBOUND`: no exact Holytail quality assignment is available. A formal
-  worker must return `blocked` instead of inferring `FULL`.
+- `MODE-UNBOUND`: no exact Holytail quality assignment is available after the
+  applicable authorized policy. A formal worker must return `blocked` instead
+  of inferring `FULL`.
 
 Holytail route is one of:
 
@@ -47,12 +48,26 @@ Holytail route is one of:
 a reviewer. Already-authorized reversible operations are not formal merely
 because they have an external effect.
 
+The lead selects the existing route first. Every `FORMAL` task receives `FULL`
+automatically. For `INLINE`, select `FULL` when consequence or uncertainty is
+material and `ECO` otherwise. Do not ask the user solely for mode selection;
+meaning, scope, permissions, publication, and irreversible-effect decisions
+remain with the authorized owner, and explicit project policies remain
+authoritative.
+
+Before spawning a formal child, require exactly one canonical packet line:
+`Quality mode: FULL.` Missing, duplicate, conflicting, parent-banner-only,
+minimizer-only, and reasoning-effort-only assignments fail before spawn. The
+child-side fail-closed check remains. Guidance and package validation do not
+claim native host interception.
+
 These axes do not derive from Ponytail. Ponytail `lite`, `full`, `ultra`, and
 `off` are minimizer settings. `full` is not `FULL`; `ultra` is not a Holytail
 signal and does not select `FORMAL`. A Ponytail banner does not assign anything
 to Holytail. Only an explicit authorized project policy may map axes. A host
 `reasoningEffort` label supplies Holytail quality only when that same kind of
-policy explicitly maps it; otherwise quality remains `MODE-UNBOUND`.
+policy explicitly maps it; after applying the standing policy, otherwise
+quality remains `MODE-UNBOUND`.
 
 ## Authority and lifecycle
 

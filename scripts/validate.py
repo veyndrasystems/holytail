@@ -412,6 +412,20 @@ def check_guidance_boundaries(
         required.extend((
             "Already-authorized reversible operations are not formal merely because they have an external effect",
             "`FULL` quality alone does not select a route",
+            "The lead selects the existing route first",
+            "Every `FORMAL` task receives `FULL` automatically",
+            "For `INLINE`, select `FULL` when consequence or uncertainty is material and `ECO` otherwise",
+            "Do not ask the user solely for mode selection",
+            "Before spawning a formal child, require exactly one canonical",
+            "Quality mode: FULL.",
+            "Missing, duplicate",
+            "conflicting",
+            "parent-banner-only",
+            "minimizer-only",
+            "reasoning-effort-only",
+            "fail before spawn",
+            "child-side fail-closed check remains",
+            "do not claim native host interception",
         ))
     if writer:
         required.extend((
@@ -435,6 +449,28 @@ def check_guidance_boundaries(
     for pattern in regressions:
         if re.search(pattern, normalized, re.I):
             fail(f"{label} contains a routing/ownership regression")
+
+
+def check_formal_packet_quality(packet: str, label: str = "formal packet") -> None:
+    """Validate the packet invariant before dispatch; not host interception."""
+    assignment_lines = [
+        line.strip()
+        for line in packet.splitlines()
+        if re.search(r"\bQuality\s+mode\s*:", line, flags=re.IGNORECASE)
+    ]
+    canonical = [line for line in assignment_lines if line == "Quality mode: FULL."]
+    if len(canonical) != 1 or len(assignment_lines) != 1:
+        fail(
+            f"{label} must contain exactly one canonical `Quality mode: FULL.` "
+            "assignment; invalid quality packets fail before spawn"
+        )
+
+
+def check_routing_identity_trigger(source: str, label: str = "routing context") -> None:
+    """Pin the identity distinction at the canonical routing boundary."""
+    normalized = " ".join(source.split())
+    if "material lifecycle/evidence/identity distinctions" not in normalized:
+        fail(f"{label} is missing the identity FORMAL trigger")
 
 
 def check_worker_blocking_boundary(source: str, label: str) -> None:
@@ -467,6 +503,11 @@ def validate_guidance_boundaries() -> None:
             path.read_text(encoding="utf-8"), str(path.relative_to(ROOT)),
             inline=path in inline_paths, writer=path in writer_paths,
         )
+    routing_path = SKILL / "references" / "routing-context.md"
+    check_routing_identity_trigger(
+        routing_path.read_text(encoding="utf-8"),
+        str(routing_path.relative_to(ROOT)),
+    )
     for path in (
         ROOT / "agents" / "holytail.md",
         PLUGIN / "profiles" / "holytail.md",

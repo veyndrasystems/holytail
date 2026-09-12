@@ -19,6 +19,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Add standing risk-based quality selection and exact formal-child packet
+  preflight guidance without changing the child-side fail-closed boundary.
+
 ### Troubleshooting
 
 The banner may be absent when the plugin is not installed, its hook is not

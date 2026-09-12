@@ -43,6 +43,18 @@ alone does not select a route or require files, delegation, or a reviewer.
 
 For `FORMAL` work, choose one path before copying a prompt:
 
+The lead selects the existing route first. Every `FORMAL` task receives `FULL`
+automatically. For `INLINE`, select `FULL` when consequence or uncertainty is
+material and `ECO` otherwise. Do not ask the user solely for mode selection;
+meaning, scope, permissions, publication, and irreversible-effect decisions
+remain with the authorized owner.
+
+Before spawning a formal child, require exactly one canonical packet line:
+`Quality mode: FULL.` Missing, duplicate, conflicting, parent-banner-only,
+minimizer-only, and reasoning-effort-only assignments fail before spawn. The
+child-side fail-closed check remains; this guidance and package validation do
+not claim native host interception.
+
 - **Standalone project:** the operator or authorized lead writes
   `.holytail/accepted.md` before implementation. The lead alone writes
   `.holytail/check.md` after rereading it against the implementation snapshot.
@@ -101,9 +113,10 @@ Honor the configured minimizer scope. Ponytail `lite`, `full`, `ultra`, and
 `off` control the minimizer. Holytail `FULL`/`ECO` describe quality and cost, while
 `INLINE`/`FORMAL` describe the route. `full` is not `FULL`; `ultra` is not a
 Holytail signal. A Holytail axis or escalation is never assigned by a Ponytail setting.
-Only an explicit authorized project policy may define a mapping. Without an
-exact quality assignment, report `MODE-UNBOUND`; a host `reasoningEffort` label
-supplies quality only when that policy explicitly maps it.
+Only an explicit authorized project policy may define a mapping. After applying
+the standing policy, if no exact quality assignment is available, report
+`MODE-UNBOUND`; a host `reasoningEffort` label supplies quality only when that
+policy explicitly maps it.
 
 For the complete mode, route, authority, evidence, and host-enforcement model,
 read [Understand concepts and evidence](docs/concepts-and-evidence.md).

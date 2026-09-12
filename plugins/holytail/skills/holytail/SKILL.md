@@ -31,7 +31,8 @@ in this shape:
 Holytail :<FULL|ECO|MODE-UNBOUND> · <INLINE|FORMAL> · evidence=agent_declared
 ```
 
-Echo the quality mode assigned by the user, host, or configured workflow.
+Echo the quality mode assigned by the user, the lead's standing policy, host,
+or configured workflow.
 `FULL`/`ECO` are quality and cost modes; `INLINE`/`FORMAL` are Holytail routes.
 Never infer one from the other. If no quality mode is available, use
 `MODE-UNBOUND`. Formal execution requires an explicitly assigned `FULL` mode;
@@ -110,6 +111,28 @@ subject area alone does not escalate it. In either route:
 `FULL` quality alone does not select a route. Code changes and quality labels
 do not by themselves require `FORMAL`, a contract file, a separate worker,
 repeated acceptance, or a reviewer. Do not hide meaningful deferral.
+
+## Standing quality selection and packet preflight
+
+The lead selects the existing route first. Every `FORMAL` task receives `FULL`
+automatically. For `INLINE`, select `FULL` when consequence or uncertainty is
+material and `ECO` otherwise. Do not ask the user solely for mode selection;
+meaning, scope, permissions, publication, and irreversible-effect decisions
+remain with the authorized owner, and explicit project policies remain
+authoritative.
+
+Before spawning a formal child, require exactly one canonical line in the
+packet:
+
+```text
+Quality mode: FULL.
+```
+
+Missing, duplicate, or conflicting assignments—and parent-banner-only,
+minimizer-only, or reasoning-effort-only packets—fail before spawn. This
+preflight complements the child-side fail-closed check. The child-side
+fail-closed check remains: a child still rejects an invalid packet it receives.
+Guidance and package validation do not claim native host interception.
 
 ## Escalate deterministically
 
